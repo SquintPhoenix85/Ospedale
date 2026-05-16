@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package packagee;
+package com.ospedale.view;
 
 import java.awt.Color;
 import java.time.LocalDate;
@@ -10,13 +10,22 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import javax.swing.table.DefaultTableModel;
+import com.ospedale.model.Administrator;
+import com.ospedale.model.Appointment;
+import com.ospedale.model.AppointmentStatus;
+import com.ospedale.model.Doctor;
+import com.ospedale.model.Hospitalization;
+import com.ospedale.model.Patient;
+import com.ospedale.model.RoomType;
+import com.ospedale.model.Specialty;
+import com.ospedale.model.User;
 
 /**
  *
  * @author jjlora
  * @author edangulo
  */
-public class NewJFrame1 extends javax.swing.JFrame {
+public class PatientDashboardView extends javax.swing.JFrame {
 
     private int x, y;
     private User user;
@@ -25,7 +34,7 @@ public class NewJFrame1 extends javax.swing.JFrame {
     private ArrayList<Appointment> appointments;
     private ArrayList<Hospitalization> hospitalizations;
 
-    public NewJFrame1(User user,Patient patient, ArrayList<User> users, ArrayList<Appointment>appointments, ArrayList<Hospitalization> hospitalizations) {
+    public PatientDashboardView(User user,Patient patient, ArrayList<User> users, ArrayList<Appointment>appointments, ArrayList<Hospitalization> hospitalizations) {
         initComponents();
         this.user = user;
         this.users = users;
@@ -50,8 +59,8 @@ public class NewJFrame1 extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        panelRound1 = new packagee.PanelRound();
-        panelRound2 = new packagee.PanelRound();
+        panelRound1 = new com.ospedale.view.PanelRound();
+        panelRound2 = new com.ospedale.view.PanelRound();
         jButton1 = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jButton7 = new javax.swing.JButton();
@@ -814,13 +823,13 @@ public class NewJFrame1 extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton9ActionPerformed
 
     private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
-        NewJFrame login = new NewJFrame();
+        LoginRegistrationView login = new LoginRegistrationView();
         this.setVisible(false);
         login.setVisible(true);
     }//GEN-LAST:event_jButton8ActionPerformed
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
-        NewJFrame11 admin = new NewJFrame11(user, users,hospitalizations, appointments);
+        DoctorDashboardView admin = new DoctorDashboardView(user, users,hospitalizations, appointments);
         this.setVisible(false);
         admin.setVisible(true);
     }//GEN-LAST:event_jButton7ActionPerformed
@@ -968,7 +977,7 @@ public class NewJFrame1 extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField7;
     private javax.swing.JTextField jTextField8;
     private javax.swing.JTextField jTextField9;
-    private packagee.PanelRound panelRound1;
-    private packagee.PanelRound panelRound2;
+    private com.ospedale.view.PanelRound panelRound1;
+    private com.ospedale.view.PanelRound panelRound2;
     // End of variables declaration//GEN-END:variables
 }
