@@ -3,10 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Jefferson/Ospedale/src/packagee/NewJFrame.java</file>
-            <file>file:/C:/Jefferson/Ospedale/src/packagee/NewJFrame1.java</file>
-            <file>file:/C:/Jefferson/Ospedale/src/packagee/NewJFrame11.java</file>
-            <file>file:/C:/Jefferson/Ospedale/src/packagee/NewJFrame111.java</file>
+            <file>file:/C:/Users/Lenovo/source/repos/Ospedale/src/com/ospedale/model/Serializable.java</file>
+            <file>file:/C:/Users/Lenovo/source/repos/Ospedale/src/com/ospedale/controller/utils/Status.java</file>
+            <file>file:/C:/Users/Lenovo/source/repos/Ospedale/src/com/ospedale/controller/HospitalizationController.java</file>
+            <file>file:/C:/Users/Lenovo/source/repos/Ospedale/src/com/ospedale/controller/AuthenticationController.java</file>
+            <file>file:/C:/Users/Lenovo/source/repos/Ospedale/src/com/ospedale/view/LoginRegistrationView.java</file>
         </group>
     </open-files>
 </project-private>
