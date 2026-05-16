@@ -9,12 +9,11 @@ public class NotificationController {
             return;
         }
 
-        int type;
+        int type = JOptionPane.PLAIN_MESSAGE;
         switch (response.getStatusCode()) {
             case OK -> type = JOptionPane.INFORMATION_MESSAGE;
             case BAD_REQUEST -> type = JOptionPane.WARNING_MESSAGE;
             case NOT_FOUND, UNAUTHORIZED -> type = JOptionPane.ERROR_MESSAGE;
-            default -> type = JOptionPane.PLAIN_MESSAGE;
         }
 
         JOptionPane.showMessageDialog(null, response.getMessage(), response.getStatusCode().name(), type);

@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
+import javax.swing.JFrame;
 import javax.swing.UIManager;
 
 /**
@@ -426,13 +427,13 @@ public class NewJFrame extends javax.swing.JFrame {
             return;
         }
 
-        Response<javax.swing.JFrame> viewResponse = authenticationController.resolveHomeView(response.getData().getRole(), users, hospitalizations, appointments);
+        Response<JFrame> viewResponse = authenticationController.resolveHomeView(response.getData().getRole(), users, hospitalizations, appointments);
         if (!viewResponse.isSuccess() || viewResponse.getData() == null) {
             notificationController.show(viewResponse);
             return;
         }
 
-        javax.swing.JFrame targetView = viewResponse.getData();
+        JFrame targetView = viewResponse.getData();
         this.setVisible(false);
         targetView.setVisible(true);
     }//GEN-LAST:event_jButton2ActionPerformed
