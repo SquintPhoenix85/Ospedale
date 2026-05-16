@@ -38,7 +38,7 @@ public class AdminDashboardView extends javax.swing.JFrame {
     public AdminDashboardView(User user,Doctor doc, ArrayList<User> users,ArrayList<Hospitalization> hospitalizations,ArrayList<Appointment> appointments) {
         initComponents();
         this.user = user;
-        this.users =users;
+        this.users = users;
         this.doctor = doc;
         this.hospitalizations = hospitalizations;
         this.appointments = appointments;
