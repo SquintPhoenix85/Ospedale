@@ -34,7 +34,7 @@ public class NewJFrame extends javax.swing.JFrame {
         this.users = new ArrayList<>();
         this.hospitalizations = new ArrayList<>();
         this.appointments = new ArrayList<>();
-        this.users.add(new Administrator(0, "admin", "admin", "adnim", "admin123"));
+        this.users.add(new Administrator(0, "admin", "admin", "admin", "admin123"));
         this.authenticationController = new AuthenticationController(new InMemoryUserService(this.users));
         this.notificationController = new NotificationController();
     }
