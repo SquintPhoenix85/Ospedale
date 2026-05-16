@@ -22,6 +22,8 @@ public class NewJFrame extends javax.swing.JFrame {
     private ArrayList<User> users;
     private ArrayList<Hospitalization> hospitalizations;
     private ArrayList<Appointment> appointments;
+    private AuthenticationController authenticationController;
+    private NotificationController notificationController;
 
     public NewJFrame() {
         initComponents();
@@ -29,7 +31,11 @@ public class NewJFrame extends javax.swing.JFrame {
         this.setLocationRelativeTo(null);
 
         this.users = new ArrayList<>();
+        this.hospitalizations = new ArrayList<>();
+        this.appointments = new ArrayList<>();
         this.users.add(new Administrator(0, "admin", "admin", "adnim", "admin123"));
+        this.authenticationController = new AuthenticationController(new InMemoryUserService(this.users));
+        this.notificationController = new NotificationController();
     }
 
     /**
@@ -414,31 +420,21 @@ public class NewJFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        // TODO add your handling code here:
-        User selectedUser = null;
-        for (User user : this.users) {
-            if (jTextField1.getText().equals(user.getUsername())) {
-                selectedUser = user;
-                if (selectedUser.getPassword().equals(jTextField2.getText())) {
-                    if (selectedUser instanceof Administrator ) {
-                        NewJFrame11 admin = new NewJFrame11(selectedUser,users,hospitalizations, appointments);
-                        this.setVisible(false);
-                        admin.setVisible(true);
-                    }
-                    else if (selectedUser instanceof Doctor ) {
-                        NewJFrame111 doctor = new NewJFrame111(selectedUser,(Doctor)selectedUser,users,hospitalizations,appointments);
-                        this.setVisible(false);
-                        doctor.setVisible(true);
-                    }
-                    else {
-                        NewJFrame1 patient = new NewJFrame1(selectedUser,(Patient) selectedUser,users,appointments, hospitalizations);
-                        this.setVisible(false);
-                        patient.setVisible(true);
-                    }
-                }
-            }
+        Response<AuthPayload> response = authenticationController.authenticate(jTextField1.getText(), jTextField2.getText());
+        notificationController.show(response);
+        if (!response.isSuccess() || response.getData() == null) {
+            return;
         }
 
+        Response<javax.swing.JFrame> viewResponse = authenticationController.resolveHomeView(response.getData().getRole(), users, hospitalizations, appointments);
+        if (!viewResponse.isSuccess() || viewResponse.getData() == null) {
+            notificationController.show(viewResponse);
+            return;
+        }
+
+        javax.swing.JFrame targetView = viewResponse.getData();
+        this.setVisible(false);
+        targetView.setVisible(true);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
