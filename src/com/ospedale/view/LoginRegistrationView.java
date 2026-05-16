@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package packagee;
+package com.ospedale.view;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import java.awt.Color;
@@ -10,20 +10,26 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
 import javax.swing.UIManager;
+import com.ospedale.model.Administrator;
+import com.ospedale.model.Appointment;
+import com.ospedale.model.Doctor;
+import com.ospedale.model.Hospitalization;
+import com.ospedale.model.Patient;
+import com.ospedale.model.User;
 
 /**
  *
  * @author jjlora
  * @author edangulo
  */
-public class NewJFrame extends javax.swing.JFrame {
+public class LoginRegistrationView extends javax.swing.JFrame {
 
     private int x, y;
     private ArrayList<User> users;
     private ArrayList<Hospitalization> hospitalizations;
     private ArrayList<Appointment> appointments;
 
-    public NewJFrame() {
+    public LoginRegistrationView() {
         initComponents();
         this.setBackground(new Color(0, 0, 0, 0));
         this.setLocationRelativeTo(null);
@@ -41,11 +47,11 @@ public class NewJFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        panelRound1 = new packagee.PanelRound();
-        panelRound2 = new packagee.PanelRound();
+        panelRound1 = new com.ospedale.view.PanelRound();
+        panelRound2 = new com.ospedale.view.PanelRound();
         jButton1 = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        panelRound3 = new packagee.PanelRound();
+        panelRound3 = new com.ospedale.view.PanelRound();
         jLabel1 = new javax.swing.JLabel();
         jTextField1 = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
@@ -421,17 +427,17 @@ public class NewJFrame extends javax.swing.JFrame {
                 selectedUser = user;
                 if (selectedUser.getPassword().equals(jTextField2.getText())) {
                     if (selectedUser instanceof Administrator ) {
-                        NewJFrame11 admin = new NewJFrame11(selectedUser,users,hospitalizations, appointments);
+                        DoctorDashboardView admin = new DoctorDashboardView(selectedUser,users,hospitalizations, appointments);
                         this.setVisible(false);
                         admin.setVisible(true);
                     }
                     else if (selectedUser instanceof Doctor ) {
-                        NewJFrame111 doctor = new NewJFrame111(selectedUser,(Doctor)selectedUser,users,hospitalizations,appointments);
+                        AdminDashboardView doctor = new AdminDashboardView(selectedUser,(Doctor)selectedUser,users,hospitalizations,appointments);
                         this.setVisible(false);
                         doctor.setVisible(true);
                     }
                     else {
-                        NewJFrame1 patient = new NewJFrame1(selectedUser,(Patient) selectedUser,users,appointments, hospitalizations);
+                        PatientDashboardView patient = new PatientDashboardView(selectedUser,(Patient) selectedUser,users,appointments, hospitalizations);
                         this.setVisible(false);
                         patient.setVisible(true);
                     }
@@ -478,7 +484,7 @@ public class NewJFrame extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new NewJFrame().setVisible(true);
+                new LoginRegistrationView().setVisible(true);
             }
         });
     }
@@ -516,8 +522,8 @@ public class NewJFrame extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField7;
     private javax.swing.JTextField jTextField8;
     private javax.swing.JTextField jTextField9;
-    private packagee.PanelRound panelRound1;
-    private packagee.PanelRound panelRound2;
-    private packagee.PanelRound panelRound3;
+    private com.ospedale.view.PanelRound panelRound1;
+    private com.ospedale.view.PanelRound panelRound2;
+    private com.ospedale.view.PanelRound panelRound3;
     // End of variables declaration//GEN-END:variables
 }
