@@ -829,7 +829,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton8ActionPerformed
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
-        DoctorDashboardView admin = new DoctorDashboardView(user, users,hospitalizations, appointments);
+        AdminDashboardView admin = new AdminDashboardView(user, users,hospitalizations, appointments);
         this.setVisible(false);
         admin.setVisible(true);
     }//GEN-LAST:event_jButton7ActionPerformed

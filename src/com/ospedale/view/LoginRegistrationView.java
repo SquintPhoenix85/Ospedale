@@ -435,11 +435,11 @@ public class LoginRegistrationView extends javax.swing.JFrame {
             this.setVisible(false);
             
             switch(role) {
-                case "ADMIN":
-                    new AdminDashboardView(user, (Doctor) user, users, hospitalizations, appointments).setVisible(true);
-                    break;
                 case "DOCTOR":
-                    new DoctorDashboardView((Doctor) user, users, hospitalizations, appointments).setVisible(true);
+                    new DoctorDashboardView(user, (Doctor) user, users, hospitalizations, appointments).setVisible(true);
+                    break;
+                case "ADMIN":
+                    new AdminDashboardView((User) user, users, hospitalizations, appointments).setVisible(true);
                     break;
                 case "PATIENT":
                     new PatientDashboardView(user, (Patient) user, users, appointments, hospitalizations).setVisible(true);
