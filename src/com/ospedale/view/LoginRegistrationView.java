@@ -6,7 +6,8 @@ package com.ospedale.view;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.ospedale.controller.AuthenticationController;
-import com.ospedale.controller.NotificationController;
+import static com.ospedale.controller.NotificationController.notifyError;
+import static com.ospedale.controller.NotificationController.notifySuccess;
 import com.ospedale.controller.utils.Response;
 import com.ospedale.controller.utils.Status;
 import java.awt.Color;
@@ -29,14 +30,12 @@ import com.ospedale.model.User;
 public class LoginRegistrationView extends javax.swing.JFrame {
 
     private int x, y;
-    private final NotificationController notificationController;
     private ArrayList<User> users;
     private ArrayList<Hospitalization> hospitalizations;
     private ArrayList<Appointment> appointments;
 
     public LoginRegistrationView() {
         
-        this.notificationController = new NotificationController();
         initComponents();
         this.setBackground(new Color(0, 0, 0, 0));
         this.setLocationRelativeTo(null);
@@ -431,7 +430,7 @@ public class LoginRegistrationView extends javax.swing.JFrame {
         if (response.getStatus() == Status.OK){
             User user = (User) response.getData().get("user");
             String role = (String) response.getData().get("role");
-            notificationController.notifySuccess(response.getMessage(), this);
+            notifySuccess(response.getMessage(), this);
             
             this.setVisible(false);
             
@@ -446,14 +445,14 @@ public class LoginRegistrationView extends javax.swing.JFrame {
                     new PatientDashboardView(user, (Patient) user, users, appointments, hospitalizations).setVisible(true);
                     break;
                 default:
-                    notificationController.notifyError("Unknown user role.", this);
+                    notifyError("Unknown user role.", this);
                     this.setVisible(true);
                     break;
             }
         } else if (response.getStatus() == Status.BAD_REQUEST || response.getStatus() == Status.NOT_FOUND) {
-            notificationController.notifyError(response.getMessage(), this);
+            notifyError(response.getMessage(), this);
         } else {
-            notificationController.notifyError("Unexpected error: " + response.getMessage(), this);
+            notifyError("Unexpected error: " + response.getMessage(), this);
         }
     }//GEN-LAST:event_LoginBtnActionPerformed
 
