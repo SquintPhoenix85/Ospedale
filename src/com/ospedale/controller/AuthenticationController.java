@@ -6,12 +6,8 @@ package com.ospedale.controller;
 
 import com.ospedale.controller.utils.*;
 import com.ospedale.model.Administrator;
-import com.ospedale.model.Doctor;
-import com.ospedale.model.Patient;
+import com.ospedale.model.Doctor; 
 import com.ospedale.model.User;
-import com.ospedale.view.AdminDashboardView;
-import com.ospedale.view.DoctorDashboardView;
-import com.ospedale.view.PatientDashboardView;
 import java.util.ArrayList;
 import java.util.HashMap;
         
@@ -26,6 +22,7 @@ public class AuthenticationController{
         for (User user : users) {
             if (userName.equals(user.getUsername())) {
                 if (user.getPassword().equals(passwd)) {
+                    
                     String role;
                     if (user instanceof Administrator) role = "ADMIN";
                     else if (user instanceof Doctor) role = "DOCTOR";
@@ -43,9 +40,8 @@ public class AuthenticationController{
         }
         return new Response("User not found.", Status.NOT_FOUND);
     }
-
-    public void logout() {
-        // TODO: Implement session clearing logic
+    
+    public Response logout() {
+        return new Response("Logout successful.", Status.OK);
     }
-
 }
