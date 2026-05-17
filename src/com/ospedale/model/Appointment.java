@@ -20,8 +20,16 @@ public class Appointment {
     private LocalDateTime datetime;
     private String reason;
 
+    public String getReason() {
+        return reason;
+    }
+
     public void setReason(String reason) {
         this.reason = reason;
+    }
+
+    public void setDatetime(LocalDateTime datetime) {
+        this.datetime = datetime;
     }
     private boolean type;
     private ArrayList<Prescription> prescriptions;
