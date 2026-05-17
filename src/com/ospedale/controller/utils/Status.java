@@ -1,8 +1,12 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.ospedale.controller.utils;
 
 /**
  *
- * 
+ * @author orarroyo
  */
 public abstract class Status {
     
@@ -15,4 +19,5 @@ public abstract class Status {
     
     public static final int INTERNAL_SERVER_ERROR = 500;
     public static final int NOT_IMPLEMENTED = 501;
+    
 }
