@@ -1172,7 +1172,7 @@ public class DoctorDashboardView extends javax.swing.JFrame {
     }//GEN-LAST:event_AppointmentLogoutBtnActionPerformed
 
     private void BackBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BackBtnActionPerformed
-        AdminDashboardView admin = new AdminDashboardView(user,users,hospitalizations, appointments);
+        AdminDashboardView admin = new AdminDashboardView(user);
         this.setVisible(false);
         admin.setVisible(true);
     }//GEN-LAST:event_BackBtnActionPerformed
