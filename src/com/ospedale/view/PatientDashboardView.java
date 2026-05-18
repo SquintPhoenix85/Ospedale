@@ -829,7 +829,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
     }//GEN-LAST:event_LogoutBtnActionPerformed
 
     private void BackButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BackButtonActionPerformed
-        AdminDashboardView admin = new AdminDashboardView(user, users,hospitalizations, appointments);
+        AdminDashboardView admin = new AdminDashboardView(user);
         this.setVisible(false);
         admin.setVisible(true);
     }//GEN-LAST:event_BackButtonActionPerformed
@@ -893,7 +893,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
         String hospitalizationReason = ReqHospReasonTxt.getText();
         long idDoctor = Long.parseLong(HospDoctorDropdown.getItemAt(HospDoctorDropdown.getSelectedIndex()));
         Doctor doc = null;
-        for(User use: this.users){
+        for(User use : this.users){
             if (use.id  == idDoctor ){
                 doc = (Doctor) use;
             }
