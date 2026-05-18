@@ -4,6 +4,7 @@
  */
 package com.ospedale.controller.utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -16,6 +17,7 @@ public class Response {
     private String message;
     private int status;
     private HashMap<String, Object> data;
+    private ArrayList<HashMap<String, Object>> dataList;
 
     public Response(String message, int status) {
         this.message = message;
@@ -26,6 +28,12 @@ public class Response {
         this.message = message;
         this.status = status;
         this.data = data;
+    }
+    
+    public Response(String message, int status, ArrayList<HashMap<String, Object>> dataList) {
+        this.message = message;
+        this.status = status;
+        this.dataList = dataList;
     }
 
     public String getMessage() {
@@ -38,6 +46,10 @@ public class Response {
 
     public HashMap<String, Object> getData() {
         return data;
+    }
+
+    public ArrayList<HashMap<String, Object>> getDataList() {
+        return dataList;
     }
     
 }

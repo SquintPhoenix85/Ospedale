@@ -17,7 +17,7 @@ import com.ospedale.model.Doctor;
 import com.ospedale.model.Patient;
 import com.ospedale.model.Prescription;
 import com.ospedale.model.Specialty;
-import com.ospedale.model.storage.Storage; // TODO: Implement storage with singleton pattern and in-memory data structures (HashMaps)
+import com.ospedale.model.storage.Storage;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -25,11 +25,11 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 public class AppointmentController {
 
-    // REQUEST APPOINTMENT
     public static Response createAppointment(String patientId, String dateStr, String timeStr, String doctorId, String specialtyStr, String reason, boolean type) {
         try {
             LocalDate date;
@@ -37,8 +37,7 @@ public class AppointmentController {
             Specialty specialty = null;
             Doctor assignedDoctor = null;
             Storage storage = Storage.getInstance();
-            
-            // Validate Patient
+
             if (patientId == null || patientId.trim().isEmpty()) {
                 return new Response("patient ID cannot be empty", Status.BAD_REQUEST);
             }
@@ -47,7 +46,6 @@ public class AppointmentController {
                 return new Response("patient not found", Status.NOT_FOUND);
             }
 
-            // Validate Date (Format YYYY-MM-DD)
             try {
                 DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 date = LocalDate.parse(dateStr.trim(), dateFormatter);
@@ -55,7 +53,6 @@ public class AppointmentController {
                 return new Response("Invalid date format. Must be YYYY-MM-DD", Status.BAD_REQUEST);
             }
 
-            // Validate Time (Format HH:mm 24h and minutes 00, 15, 30, 45)
             try {
                 DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
                 time = LocalTime.parse(timeStr.trim(), timeFormatter);
@@ -68,7 +65,6 @@ public class AppointmentController {
                 return new Response("Invalid time format. Must be HH:mm", Status.BAD_REQUEST);
             }
 
-            // Validate Specialty
             if (specialtyStr != null && !specialtyStr.trim().isEmpty()) {
                 try {
                     specialty = Specialty.valueOf(specialtyStr.trim().toUpperCase());
@@ -77,7 +73,6 @@ public class AppointmentController {
                 }
             }
 
-            // Validate and Assign Doctor
             if (doctorId != null && !doctorId.trim().isEmpty()) {
                 assignedDoctor = storage.getDoctor(doctorId);
                 if (assignedDoctor == null) {
@@ -100,26 +95,22 @@ public class AppointmentController {
                 return new Response("You must specify either a doctor or a specialty", Status.BAD_REQUEST);
             }
 
-            // Generate automatic Appointment ID: A-{patient_id}-NNNN
             String appointmentId = generateAppointmentId(storage, patientId);
 
-            // Create Appointment model with initial state REQUESTED
             LocalDateTime datetime = LocalDateTime.of(date, time);
             Appointment appointment = new Appointment(appointmentId, patient, assignedDoctor, specialty, datetime, reason, type);
 
-            // Save in storage
             if (!storage.addAppointment(appointment)) {
                 return new Response("Error saving the appointment", Status.BAD_REQUEST);
             }
 
-            return new Response("Appointment requested successfully. ID: " + appointmentId, Status.CREATED, appointment);
+            return new Response("Appointment requested successfully. ID: " + appointmentId, Status.CREATED, appointment.serialize());
 
         } catch (Exception ex) {
             return new Response("Unexpected error", Status.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // ACCEPT APPOINTMENT
     public static Response acceptAppointment(String appointmentId, String doctorId) {
         try {
             Storage storage = Storage.getInstance();
@@ -143,7 +134,6 @@ public class AppointmentController {
         }
     }
 
-    // COMPLETE APPOINTMENT
     public static Response completeAppointment(String appointmentId, String doctorId) {
         try {
             Storage storage = Storage.getInstance();
@@ -167,7 +157,6 @@ public class AppointmentController {
         }
     }
 
-    // CANCEL APPOINTMENT
     public static Response cancelAppointment(String appointmentId, String patientId) {
         try {
             Storage storage = Storage.getInstance();
@@ -191,7 +180,6 @@ public class AppointmentController {
         }
     }
 
-    // RESCHEDULE APPOINTMENT
     public static Response rescheduleAppointment(String appointmentId, String doctorId, String newTimeStr, String reason) {
         try {
             Storage storage = Storage.getInstance();
@@ -217,17 +205,14 @@ public class AppointmentController {
                 return new Response("Invalid time format. Must be HH:mm", Status.BAD_REQUEST);
             }
 
-            // Do not change the day, only the time
             LocalDate currentDay = appointment.getDatetime().toLocalDate();
-            
-            // Validate that the doctor is still available in the new time
+  
             if (!isDoctorAvailable(storage, appointment.getDoctor(), currentDay, newTime)) {
                 return new Response("Doctor is not available at this new time", Status.BAD_REQUEST);
             }
 
             appointment.setDatetime(LocalDateTime.of(currentDay, newTime));
             
-            // Concatenate reason
             String currentReason = appointment.getReason() == null ? "" : appointment.getReason();
             appointment.setReason(currentReason + "\n[RESCHEDULED]: " + reason);
 
@@ -238,7 +223,6 @@ public class AppointmentController {
         }
     }
 
-    // PRESCRIBE MEDICATIONS
     public static Response prescribeMedications(String appointmentId, String doctorId, ArrayList<Prescription> prescriptions) {
         try {
             Storage storage = Storage.getInstance();
@@ -265,8 +249,6 @@ public class AppointmentController {
         }
     }
 
-    // GET APPOINTMENTS (VIEWS)
-
     public static Response getAppointmentsByPatient(String patientId) {
         try {
             Storage storage = Storage.getInstance();
@@ -274,11 +256,15 @@ public class AppointmentController {
             
             ArrayList<Appointment> patientAppts = all.stream()
                 .filter(a -> String.valueOf(a.getPatient().getId()).equals(patientId))
-                // Order descending by datetime
                 .sorted(Comparator.comparing(Appointment::getDatetime).reversed())
                 .collect(Collectors.toCollection(ArrayList::new));
+            
+            ArrayList<HashMap<String, Object>> serializedPatientAppts = new ArrayList<>();
+            for (Appointment appt : patientAppts) {
+                serializedPatientAppts.add(appt.serialize());
+            }
                 
-            return new Response("Appointments found", Status.OK, patientAppts);
+            return new Response("Appointments found", Status.OK, serializedPatientAppts);
         } catch (Exception ex) {
             return new Response("Unexpected error", Status.INTERNAL_SERVER_ERROR);
         }
@@ -292,11 +278,15 @@ public class AppointmentController {
             ArrayList<Appointment> doctorAppts = all.stream()
                 .filter(a -> String.valueOf(a.getDoctor().getId()).equals(doctorId))
                 .filter(a -> !onlyPending || a.getStatus() == AppointmentStatus.PENDING)
-                // Order descending by datetime
                 .sorted(Comparator.comparing(Appointment::getDatetime).reversed())
                 .collect(Collectors.toCollection(ArrayList::new));
-                
-            return new Response("Appointments found", Status.OK, doctorAppts);
+            
+            ArrayList<HashMap<String, Object>> serializedDoctorAppts = new ArrayList<>();
+            for (Appointment appt : doctorAppts) {
+                serializedDoctorAppts.add(appt.serialize());
+            }
+            
+            return new Response("Appointments found", Status.OK, serializedDoctorAppts);
         } catch (Exception ex) {
             return new Response("Unexpected error", Status.INTERNAL_SERVER_ERROR);
         }
@@ -307,12 +297,11 @@ public class AppointmentController {
     private static boolean isDoctorAvailable(Storage storage, Doctor doctor, LocalDate date, LocalTime time) {
         ArrayList<Appointment> allAppointments = storage.getAppointments();
         for (Appointment appt : allAppointments) {
-            // Evaluate states different from CANCELED to track as "busy"
             if (appt.getStatus() != AppointmentStatus.CANCELED) {
                 if (String.valueOf(appt.getDoctor().getId()).equals(String.valueOf(doctor.getId())) &&
                     appt.getDatetime().toLocalDate().equals(date) &&
                     appt.getDatetime().toLocalTime().equals(time)) {
-                    return false; // Busy
+                    return false;
                 }
             }
         }
@@ -338,8 +327,7 @@ public class AppointmentController {
                 count++;
             }
         }
-        
-        // Empieza en 0000
+
         int nextId = count;
         String formattedCount = String.format("%04d", nextId);
         

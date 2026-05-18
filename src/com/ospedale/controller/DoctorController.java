@@ -71,7 +71,7 @@ public class DoctorController {
             Doctor doctor = new Doctor(id, username, firstname, lastname, password, specialty, licenceNumber, office);
             
             if (storage.addDoctor(doctor)) {
-                return new Response("Doctor registered successfully", Status.CREATED, doctor);
+                return new Response("Doctor registered successfully", Status.CREATED, doctor.serialize());
             } else {
                 return new Response("Could not register doctor", Status.INTERNAL_SERVER_ERROR);
             }
@@ -134,7 +134,7 @@ public class DoctorController {
             doctor.setLicenceNumber(newLicence);
             doctor.setAssignedOffice(newOffice);
 
-            return new Response("Doctor info updated successfully", Status.OK, doctor);
+            return new Response("Doctor info updated successfully", Status.OK, doctor.serialize());
 
         } catch (Exception ex) {
             return new Response("Unexpected error", Status.INTERNAL_SERVER_ERROR);
