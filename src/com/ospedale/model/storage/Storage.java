@@ -114,19 +114,19 @@ public class Storage {
         }
     }
 
-    public List<Doctor> getDoctors() {
+    public ArrayList<Doctor> getDoctors() {
         ArrayList<Doctor> out = new ArrayList<>();
         for (User u : usersById.values()) if (u instanceof Doctor) out.add((Doctor) u);
         return out;
     }
 
-    public List<Patient> getPatients() {
+    public ArrayList<Patient> getPatients() {
         ArrayList<Patient> out = new ArrayList<>();
         for (User u : usersById.values()) if (u instanceof Patient) out.add((Patient) u);
         return out;
     }
 
-    public List<User> getAllUsers() {
+    public ArrayList<User> getAllUsers() {
         return new ArrayList<>(usersById.values());
     }
 
@@ -141,6 +141,28 @@ public class Storage {
         if (usernameTaken) return false;
         usersById.put(u.getId(), u);
         return true;
+    }
+
+    public boolean addDoctor(Doctor doctor) {
+        return addUser(doctor);
+    }
+    
+    public boolean addPatient(Patient patient) {
+        return addUser(patient);
+    }
+
+    public Administrator getAdministrator(String idStr) {
+        try {
+            long id = Long.parseLong(idStr);
+            User u = usersById.get(id);
+            return (u instanceof Administrator) ? (Administrator) u : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public boolean isAdmin(String idStr) {
+        return getAdministrator(idStr) != null;
     }
 
     public boolean addAppointment(Appointment a) {
@@ -165,7 +187,7 @@ public class Storage {
         return appointmentsById.get(id);
     }
 
-    public List<Appointment> getAppointments() {
+    public ArrayList<Appointment> getAppointments() {
         return new ArrayList<>(appointmentsById.values());
     }
 }
