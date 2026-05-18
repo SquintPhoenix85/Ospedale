@@ -5,12 +5,13 @@
 package com.ospedale.model;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 
 /**
  *
  * @author edangulo
  */
-public class Hospitalization {
+public class Hospitalization implements Serializable {
     
     private final String id;
     private Patient patient;
@@ -54,10 +55,41 @@ public class Hospitalization {
         this.status = hopsS;
     }
 
-    public Patient getPatient() { return patient; }
-    public Doctor getDoctor() { return doctor; }
-    public LocalDate getDate() { return date; }
-    public HospitalizationStatus getStatus() { return status; }
-    public void setDoctor(Doctor doctor) { this.doctor = doctor; }
+    public Patient getPatient() { 
+        return patient; 
+    }
     
+    public Doctor getDoctor() { 
+        return doctor; 
+    }
+    
+    public LocalDate getDate() { 
+        return date; 
+    }
+    
+    public HospitalizationStatus getStatus() { 
+        return status; 
+    }
+    
+    public void setDoctor(Doctor doctor) { 
+        this.doctor = doctor; 
+    }
+    
+    @Override
+    public HashMap<String, Object> serialize() {
+        HashMap<String, Object> map = new HashMap<>();
+        
+        map.put("id", this.id);
+        map.put("date", this.date != null ? this.date.toString() : null);
+        map.put("reason", this.reason);
+        map.put("roomtype", this.roomType != null ? this.roomType.name() : null); // Enum to String
+        map.put("status", this.status != null ? this.status.name() : null); // Enum to String
+        map.put("observations", this.observations);
+        
+        // Flatten constraints
+        map.put("patientid", this.patient != null ? this.patient.getId() : null);
+        map.put("doctorid", this.doctor != null ? this.doctor.getId() : null);
+        
+        return map;
+    }
 }

@@ -6,6 +6,7 @@ package com.ospedale.model;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  *
@@ -61,6 +62,19 @@ public class Patient extends User {
         this.phone = phone;
         this.address = address;
         this.appointments = new ArrayList<>();
+    }
+    
+    @Override
+    public HashMap<String, Object> serialize() {
+        HashMap<String, Object> map = super.serialize();
+        
+        map.put("email", this.email);
+        map.put("birthdate", this.birthdate != null ? this.birthdate.toString() : null);
+        map.put("gender", this.gender);
+        map.put("phone", this.phone);
+        map.put("address", this.address);
+        
+        return map;
     }
     
 }

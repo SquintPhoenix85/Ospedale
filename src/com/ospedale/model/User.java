@@ -4,11 +4,13 @@
  */
 package com.ospedale.model;
 
+import java.util.HashMap;
+
 /**
  *
  * @author edangulo
  */
-public abstract class User {
+public abstract class User implements Serializable {
     
     protected final long id;
     protected String username;
@@ -58,6 +60,19 @@ public abstract class User {
 
     public String getPassword() {
         return password;
+    }
+    
+    @Override
+    public HashMap<String, Object> serialize() {
+        HashMap<String, Object> map = new HashMap<>();
+        
+        map.put("id", this.id);
+        map.put("username", this.username);
+        map.put("firstname", this.firstname);
+        map.put("lastname", this.lastname);
+        map.put("password", this.password);
+        
+        return map;
     }
     
 }

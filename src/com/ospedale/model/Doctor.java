@@ -5,6 +5,7 @@
 package com.ospedale.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  *
@@ -48,5 +49,16 @@ public class Doctor extends User {
 
     public void setAssignedOffice(String assignedOffice) {
         this.assignedOffice = assignedOffice;
+    }
+    
+    @Override
+    public HashMap<String, Object> serialize() {
+        HashMap<String, Object> map = super.serialize();
+        
+        map.put("specialty", this.specialty);
+        map.put("licencenumber", this.licenceNumber);
+        map.put("assignedoffice", this.assignedOffice);
+        
+        return map;
     }
 }
