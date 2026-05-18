@@ -8,8 +8,9 @@ import com.ospedale.controller.utils.*;
 import com.ospedale.model.Administrator;
 import com.ospedale.model.Doctor; 
 import com.ospedale.model.User;
-import java.util.ArrayList;
+import com.ospedale.model.storage.Storage;
 import java.util.HashMap;
+import java.util.Optional;
         
 /**
  *
@@ -18,27 +19,28 @@ import java.util.HashMap;
  */
 public class AuthenticationController{
 
-    public static Response tryAuthenticate(String userName, String passwd, ArrayList<User> users) {
-        for (User user : users) {
-            if (userName.equals(user.getUsername())) {
-                if (user.getPassword().equals(passwd)) {
-                    
-                    String role;
-                    if (user instanceof Administrator) role = "ADMIN";
-                    else if (user instanceof Doctor) role = "DOCTOR";
-                    else role = "PATIENT";
-
-                    HashMap<String, Object> data = new HashMap<>();
-                    data.put("user", user);
-                    data.put("role", role);
-
-                    return new Response("Authentication successful.", Status.OK, data);
-                } else {
-                    return new Response("Incorrect password.", Status.BAD_REQUEST);
-                }
-            }
+    public static Response tryAuthenticate(String userName, String passwd) {
+        Storage storage = Storage.getInstance();
+        Optional<User> opt = storage.findUserByUsername(userName);
+        if (!opt.isPresent()) {
+            return new Response("User not found.", Status.NOT_FOUND);
         }
-        return new Response("User not found.", Status.NOT_FOUND);
+        User user = opt.get();
+        if (user.getPassword().equals(passwd)) {
+                    
+            String role;
+            if (user instanceof Administrator) role = "ADMIN";
+            else if (user instanceof Doctor) role = "DOCTOR";
+            else role = "PATIENT";
+
+            HashMap<String, Object> data = new HashMap<>();
+            data.put("user", user);
+            data.put("role", role);
+
+            return new Response("Authentication successful.", Status.OK, data);
+        } else {
+            return new Response("Incorrect password.", Status.BAD_REQUEST);
+        }
     }
     
     public Response logout() {

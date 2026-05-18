@@ -21,6 +21,7 @@ import com.ospedale.model.Doctor;
 import com.ospedale.model.Hospitalization;
 import com.ospedale.model.Patient;
 import com.ospedale.model.User;
+import com.ospedale.model.storage.Storage;
 
 /**
  *
@@ -39,9 +40,12 @@ public class LoginRegistrationView extends javax.swing.JFrame {
         initComponents();
         this.setBackground(new Color(0, 0, 0, 0));
         this.setLocationRelativeTo(null);
+        
+        Storage storage = Storage.getInstance();
 
-        this.users = new ArrayList<>();
-        this.users.add(new Administrator(0, "admin", "admin", "adnim", "admin123"));
+        this.users = new ArrayList<>(storage.getAllUsers());
+        this.hospitalizations = new ArrayList<>();
+        this.appointments = new ArrayList<>(storage.getAppointments());
     }
 
     /**
@@ -426,7 +430,7 @@ public class LoginRegistrationView extends javax.swing.JFrame {
     }//GEN-LAST:event_CloseBtnActionPerformed
 
     private void LoginBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LoginBtnActionPerformed
-        Response response = AuthenticationController.tryAuthenticate(UserNameLoginTxt.getText(), PasswdLoginTxt.getText(), users);
+        Response response = AuthenticationController.tryAuthenticate(UserNameLoginTxt.getText(), PasswdLoginTxt.getText());
         if (response.getStatus() == Status.OK){
             User user = (User) response.getData().get("user");
             String role = (String) response.getData().get("role");
@@ -439,7 +443,7 @@ public class LoginRegistrationView extends javax.swing.JFrame {
                     new DoctorDashboardView(user, (Doctor) user, users, hospitalizations, appointments).setVisible(true);
                     break;
                 case "ADMIN":
-                    new AdminDashboardView((User) user, users, hospitalizations, appointments).setVisible(true);
+                    new AdminDashboardView((User) user).setVisible(true);
                     break;
                 case "PATIENT":
                     new PatientDashboardView(user, (Patient) user, users, appointments, hospitalizations).setVisible(true);
@@ -470,7 +474,14 @@ public class LoginRegistrationView extends javax.swing.JFrame {
         String comPassword = PasswdConfTxt.getText();
         LocalDate birthdate = LocalDate.of(Integer.parseInt(birth.substring(0, 4)), Integer.parseInt(birth.substring(5, 7)), Integer.parseInt(birth.substring(8)));
         if (comPassword.equals(password)) {
-            users.add(new Patient(id, user, firstname, lastname, password, email, birthdate, gender, phone, address));
+            Patient p = new Patient(id, user, firstname, lastname, password, email, birthdate, gender, phone, address);
+            boolean added = Storage.getInstance().addUser(p);
+            if (added) {
+                notifySuccess("Patient registered successfully.", this);
+                this.users.add(p);
+            } else {
+                notifyError("Failed to register patient (duplicate id or/or username).", this);
+            }
         }
         
     }//GEN-LAST:event_RegistrationBtnActionPerformed

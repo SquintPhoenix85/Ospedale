@@ -12,6 +12,7 @@ import com.ospedale.model.Hospitalization;
 import com.ospedale.model.Patient;
 import com.ospedale.model.Specialty;
 import com.ospedale.model.User;
+import com.ospedale.model.storage.Storage;
 
 /**
  *
@@ -25,14 +26,31 @@ public class AdminDashboardView extends javax.swing.JFrame {
     private ArrayList<Appointment>appointments;
     private ArrayList<Hospitalization>hospitalizations;
     private User user;
-    public AdminDashboardView(User user, ArrayList<User>users,ArrayList<Hospitalization> hospitalizations, ArrayList<Appointment> appointments) {
+    public AdminDashboardView(User user) {
         initComponents();
         this.user = user;
-        this.users = users;
-        this.hospitalizations = hospitalizations;
-        this.appointments = appointments;
+        Storage storage = Storage.getInstance();
+        this.users = new ArrayList<>(storage.getAllUsers());
+        this.appointments = new ArrayList<>(storage.getAppointments());
+        this.hospitalizations = new ArrayList<>();
+        loadImpersonationDropdowns();
         this.setBackground(new Color(0, 0, 0, 0));
         this.setLocationRelativeTo(null);
+    }
+
+    private void loadImpersonationDropdowns() {
+        DoctorSelectDropdown.removeAllItems();
+        PatientSelectDropdown.removeAllItems();
+        DoctorSelectDropdown.addItem("Select one");
+        PatientSelectDropdown.addItem("Select one");
+
+        for (User u : users) {
+            if (u instanceof Doctor) {
+                DoctorSelectDropdown.addItem(String.valueOf(u.getId()));
+            } else if (u instanceof Patient) {
+                PatientSelectDropdown.addItem(String.valueOf(u.getId()));
+            }
+        }
     }
 
     /**
@@ -427,16 +445,24 @@ public class AdminDashboardView extends javax.swing.JFrame {
         String comPassword = PasswdConfTxt.getText();
         Specialty specialty = Specialty.valueOf(spec.replaceAll(" &", "").replaceAll(" ", "_"));
         if (password.equals(comPassword)) {
-            users.add(new Doctor(id, username, firstname, lastname, password, specialty, licenseNumber, assignedOffice));
+            Doctor doctor = new Doctor(id, username, firstname, lastname, password, specialty, licenseNumber, assignedOffice);
+            boolean added = Storage.getInstance().addUser(doctor);
+            if (added) {
+                users.add(doctor);
+                DoctorSelectDropdown.addItem(String.valueOf(doctor.getId()));
+            }
         }
     }//GEN-LAST:event_DoctorRegistrationBtnActionPerformed
 
     private void DoctorLaunchBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DoctorLaunchBtnActionPerformed
+        if (DoctorSelectDropdown.getSelectedIndex() <= 0) {
+            return;
+        }
         long idDoctor = Long.parseLong(DoctorSelectDropdown.getItemAt(DoctorSelectDropdown.getSelectedIndex()));
         Doctor temp = null;
         for(User use:this.users){
             if(use.getId() == idDoctor)
-                temp =(Doctor) user;
+                temp =(Doctor) use;
         }
         DoctorDashboardView doctor = new DoctorDashboardView(user,temp, users, hospitalizations,appointments);
         this.setVisible(false);
@@ -451,11 +477,14 @@ public class AdminDashboardView extends javax.swing.JFrame {
     }//GEN-LAST:event_LogoutBtnActionPerformed
 
     private void PatientLaunchBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PatientLaunchBtnActionPerformed
-        long idPatient = Long.parseLong(DoctorSelectDropdown.getItemAt(DoctorSelectDropdown.getSelectedIndex()));
+        if (PatientSelectDropdown.getSelectedIndex() <= 0) {
+            return;
+        }
+        long idPatient = Long.parseLong(PatientSelectDropdown.getItemAt(PatientSelectDropdown.getSelectedIndex()));
         Patient temp = null;
         for(User use:this.users){
             if(use.getId() == idPatient)
-                temp =(Patient) user;
+                temp =(Patient) use;
         }
         PatientDashboardView patient = new PatientDashboardView(user,temp,users,appointments,hospitalizations);
         this.setVisible(false);
