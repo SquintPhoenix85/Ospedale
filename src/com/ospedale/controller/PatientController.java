@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import com.ospedale.controller.utils.Status;
 import com.ospedale.model.User;
 import com.ospedale.controller.utils.Response;
+import com.ospedale.model.Doctor;
 import com.ospedale.model.Patient;
 import com.ospedale.model.storage.Storage;
 /**
@@ -77,7 +78,7 @@ public class PatientController {
             Patient patient = new Patient(id, username, firstname, lastname, password, email, birthdate, gender, phone, address);
             
             if (storage.addPatient(patient)) {
-                return new Response("Patient registered successfully", Status.CREATED, patient);
+                return new Response("Patient registered successfully", Status.CREATED, patient.serialize());
             } else {
                 return new Response("Could not register patient", Status.INTERNAL_SERVER_ERROR);
             }
@@ -149,7 +150,7 @@ public class PatientController {
             patient.setPhone(phone);
             patient.setAddress(newAddress);
 
-            return new Response("Patient info updated successfully", Status.OK, patient);
+            return new Response("Patient info updated successfully", Status.OK, patient.serialize());
 
         } catch (Exception ex) {
             return new Response("Unexpected error", Status.INTERNAL_SERVER_ERROR);

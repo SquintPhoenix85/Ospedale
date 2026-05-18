@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  *
@@ -57,7 +58,7 @@ public class HospitalizationController {
                 return new Response("Error saving the hospitalization", Status.BAD_REQUEST);
             }
 
-            return new Response("Hospitalization requested successfully. ID: " + hospitalizationId, Status.CREATED, hosp);
+            return new Response("Hospitalization requested successfully. ID: " + hospitalizationId, Status.CREATED, hosp.serialize());
 
         } catch (Exception ex) {
             return new Response("Unexpected error", Status.INTERNAL_SERVER_ERROR);
@@ -180,7 +181,12 @@ public class HospitalizationController {
         try {
             Storage storage = Storage.getInstance();
             ArrayList<Hospitalization> hosps = new ArrayList<>(storage.getHospitalizationsByPatient(patientId));
-            return new Response("Hospitalizations retrieved", Status.OK, hosps);
+            
+            ArrayList<HashMap<String, Object>> hospsList = new ArrayList<>();
+            for (Hospitalization hosp : hosps) {
+                hospsList.add(hosp.serialize());
+            }
+            return new Response("Hospitalizations retrieved", Status.OK, hospsList);
         } catch (Exception ex) {
             return new Response("Unexpected error", Status.INTERNAL_SERVER_ERROR);
         }
