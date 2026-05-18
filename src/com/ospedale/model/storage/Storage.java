@@ -23,14 +23,16 @@ public class Storage {
 
     private final Map<Long, User> usersById;
     private final Map<String, Appointment> appointmentsById;
+    private final Map<String, Hospitalization> hospitalizationsById;
 
     private Storage() {
         usersById = new HashMap<>();
         appointmentsById = new HashMap<>();
+        hospitalizationsById = new HashMap<>();
         loadUsersFromJson();
     }
 
-    public static synchronized Storage getInstance() {
+    public static Storage getInstance() {
         if (instance == null) {
             instance = new Storage();
         }
@@ -181,6 +183,52 @@ public class Storage {
             } catch (Exception ignored) {}
         }
         return true;
+    }
+
+    public boolean addHospitalization(Hospitalization h) {
+        if (h == null) return false;
+        if (hospitalizationsById.containsKey(h.getId())) return false;
+        hospitalizationsById.put(h.getId(), h);
+
+        if (h.getPatient() != null) {
+            try {
+                h.getPatient().setHospitalization(h);
+            } catch (Exception ignored) {}
+        }
+        if (h.getDoctor() != null) {
+            try {
+                h.getDoctor().addHospitalization(h);
+            } catch (Exception ignored) {}
+        }
+        return true;
+    }
+
+    public Hospitalization getHospitalization(String id) {
+        return hospitalizationsById.get(id);
+    }
+
+    public List<Hospitalization> getHospitalizations() {
+        return new ArrayList<>(hospitalizationsById.values());
+    }
+
+    public List<Hospitalization> getHospitalizationsByPatient(String patientIdStr) {
+        try {
+            long patientId = Long.parseLong(patientIdStr);
+            ArrayList<Hospitalization> out = new ArrayList<>();
+            for (Hospitalization h : hospitalizationsById.values()) {
+                if (h.getPatient() != null && h.getPatient().getId() == patientId) {
+                    out.add(h);
+                }
+            }
+            out.sort((a, b) -> b.getDate().compareTo(a.getDate()));
+            return out;
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    public boolean deleteHospitalization(String id) {
+        return hospitalizationsById.remove(id) != null;
     }
 
     public Appointment getAppointment(String id) {

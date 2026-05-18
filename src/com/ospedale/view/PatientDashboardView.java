@@ -880,7 +880,6 @@ public class PatientDashboardView extends javax.swing.JFrame {
 
 
     private void RefreshBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RefreshBtnActionPerformed
-        // TODO add your handling code here:
         Patient p = (Patient) user;
         DefaultTableModel model = (DefaultTableModel) AppointmentViewTable.getModel();
         model.setRowCount(0);
