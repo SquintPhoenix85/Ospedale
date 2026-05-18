@@ -159,21 +159,24 @@ public class PatientController {
     // -- Métodos auxiliares universales --
     protected static boolean isUsernameInUse(Storage storage, String username, long excludeId) {
         ArrayList<Patient> patients = storage.getPatients() != null ? storage.getPatients() : new ArrayList<>();
-        // Asumiendo que Storage tiene getDoctors()
-        // ArrayList<Doctor> doctors = storage.getDoctors(); 
+        ArrayList<Doctor> doctors = storage.getDoctors(); 
         
         for (Patient p : patients) {
             if (p.getUsername().equals(username) && p.getId() != excludeId) return true;
         }
-        // for (Doctor d : doctors) {
-        //    if (d.getUsername().equals(username) && d.getId() != excludeId) return true;
-        // }
-        // TODO: Comprobar Admin
+        for (Doctor d : doctors) {
+            if (d.getUsername().equals(username) && d.getId() != excludeId) return true;
+        }
+        
+        // Comprobar también el Admin para evitar conflictos a nivel global
+        ArrayList<User> allUsers = storage.getAllUsers();
+        for (User u : allUsers) {
+             if (u.getUsername().equals(username) && u.getId() != excludeId) return true;
+        }
         return false;
     }
 
     protected static boolean isIdInUse(Storage storage, long id) {
-        // Revisar que doctores o admin no lo tengan
-        return false; // Conéctalo a tu storage real
+        return storage.getUserById(id).isPresent();
     }
 }
