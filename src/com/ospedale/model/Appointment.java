@@ -6,12 +6,13 @@ package com.ospedale.model;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  *
  * @author edangulo
  */
-public class Appointment {
+public class Appointment implements Serializable {
     
     private final String id;
     private Patient patient;
@@ -101,6 +102,33 @@ public class Appointment {
 
     public boolean addPrescription(Prescription prescrip) {
         return this.prescriptions.add(prescrip);
+    }
+    
+    @Override
+    
+    public HashMap<String, Object> serialize() {
+        HashMap<String, Object> map = new HashMap<>();
+        
+        map.put("id", this.id);
+        map.put("datetime", this.datetime != null ? this.datetime.toString() : null);
+        map.put("status", this.status != null ? this.status.name() : null); 
+        map.put("reason", this.reason);
+        
+        if (this.patient != null) {
+            map.put("patientId", this.patient.getId());
+            map.put("patientName", this.patient.getFirstname() + " " + this.patient.getLastname());
+        } else {
+            map.put("patientId", null);
+        }
+
+        if (this.doctor != null) {
+            map.put("doctorId", this.doctor.getId());
+            map.put("doctorName", this.doctor.getFirstname() + " " + this.doctor.getLastname());
+        } else {
+            map.put("doctorId", null);
+        }
+        
+        return map;
     }
     
 }
