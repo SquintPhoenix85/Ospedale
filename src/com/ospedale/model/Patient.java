@@ -49,6 +49,10 @@ public class Patient extends User {
     public ArrayList<Appointment> getAppointments() {
         return appointments;
     }
+
+    public Hospitalization getHospitalization() {
+        return hospitalization;
+    }
     
     public void addAppointment(Appointment a) {
         this.appointments.add(a);
