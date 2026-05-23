@@ -4,6 +4,16 @@
  */
 package com.ospedale.controller;
 
+import com.ospedale.model.Administrator;
+import com.ospedale.model.Doctor;
+import com.ospedale.model.Patient;
+import com.ospedale.model.User;
+import com.ospedale.model.storage.Storage;
+import com.ospedale.view.AdminDashboardView;
+import com.ospedale.view.DoctorDashboardView;
+import com.ospedale.view.PatientDashboardView;
+import java.util.ArrayList;
+
 /**
  *
  * @author orarroyo
@@ -11,16 +21,40 @@ package com.ospedale.controller;
  */
 public class AdminController {
 
-    // Example method to check impersonation capability
-    public boolean canImpersonate(String targetRole) {
-        // TODO: Implement logic based on session and permissions
-        return "patient".equals(targetRole) || "doctor".equals(targetRole);
+    public static void launchDoctorDashboard(javax.swing.JFrame currentView, User adminUser, String targetDoctorId) {
+        if (!(adminUser instanceof Administrator)) return;
+        
+        Storage storage = Storage.getInstance();
+        Doctor doctor = storage.getDoctor(targetDoctorId);
+        
+        if (doctor != null) {
+            currentView.setVisible(false);
+            new DoctorDashboardView(adminUser, doctor, 
+                                    new ArrayList<>(storage.getAllUsers()), 
+                                    new ArrayList<>(), // Ideally filter this via DataController
+                                    new ArrayList<>(storage.getAppointments())).setVisible(true);
+        }
     }
 
-    // Example navigation/back method
-    public void handleBackNavigation(String fromView, Object viewContext) {
-        // TODO: Implement back navigation logic for admin
+    public static void launchPatientDashboard(javax.swing.JFrame currentView, User adminUser, String targetPatientId) {
+        if (!(adminUser instanceof Administrator)) return;
+        
+        Storage storage = Storage.getInstance();
+        Patient patient = storage.getPatient(targetPatientId);
+        
+        if (patient != null) {
+            currentView.setVisible(false);
+            new PatientDashboardView(adminUser, patient, 
+                                     new ArrayList<>(storage.getAllUsers()), 
+                                     new ArrayList<>(storage.getAppointments()), 
+                                     new ArrayList<>()).setVisible(true);
+        }
     }
 
-    // Additional admin-specific methods as required
+    public static void navigateBackToAdmin(javax.swing.JFrame currentView, User adminUser) {
+        if (adminUser instanceof Administrator) {
+            currentView.setVisible(false);
+            new AdminDashboardView(adminUser).setVisible(true);
+        }
+    }
 }
