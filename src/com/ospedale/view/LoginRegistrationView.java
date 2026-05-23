@@ -6,8 +6,8 @@ package com.ospedale.view;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.ospedale.controller.AuthenticationController;
-import static com.ospedale.controller.NotificationController.notifyError;
-import static com.ospedale.controller.NotificationController.notifySuccess;
+import com.ospedale.controller.PatientController;
+import static com.ospedale.controller.NotificationController.*;
 import com.ospedale.controller.utils.Response;
 import com.ospedale.controller.utils.Status;
 import java.awt.Color;
@@ -463,27 +463,24 @@ public class LoginRegistrationView extends javax.swing.JFrame {
     private void RegistrationBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RegistrationBtnActionPerformed
         String firstname = FirstNameTxt.getText();
         String lastname = LastNameTxt.getText();
-        long id = Long.parseLong(IDTxt.getText());
+        String idStr = IDTxt.getText();
         boolean gender = (GenderDropdown.getSelectedIndex() == 0 ? null : (GenderDropdown.getSelectedIndex() == 1 ));
         String birth = BirthdateTxt.getText();
         String address = AddressTxt.getText();
-        long phone = Long.parseLong(PhoneTxt.getText());
+        String phoneStr = PhoneTxt.getText();
         String email = EmailTxt.getText();
         String user = UserNameRegistrationTxt.getText();
         String password = PasswdRegistrationTxt.getText();
         String comPassword = PasswdConfTxt.getText();
-        LocalDate birthdate = LocalDate.of(Integer.parseInt(birth.substring(0, 4)), Integer.parseInt(birth.substring(5, 7)), Integer.parseInt(birth.substring(8)));
-        if (comPassword.equals(password)) {
-            Patient p = new Patient(id, user, firstname, lastname, password, email, birthdate, gender, phone, address);
-            boolean added = Storage.getInstance().addUser(p);
-            if (added) {
-                notifySuccess("Patient registered successfully.", this);
-                this.users.add(p);
-            } else {
-                notifyError("Failed to register patient (duplicate id or/or username).", this);
-            }
+
+        Response response = PatientController.registerPatient(idStr, user, firstname, lastname, password, comPassword, email, birth, gender, phoneStr, address);
+
+        if (response.getStatus() == Status.CREATED) {
+            notifySuccess(response.getMessage(), this);
+            this.users = new java.util.ArrayList<>(Storage.getInstance().getAllUsers());
+        } else {
+            notifyError(response.getMessage(), this);
         }
-        
     }//GEN-LAST:event_RegistrationBtnActionPerformed
 
     private void PasswdConfTxtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PasswdConfTxtActionPerformed
