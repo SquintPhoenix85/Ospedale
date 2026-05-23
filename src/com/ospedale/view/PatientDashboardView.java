@@ -5,25 +5,31 @@
 package com.ospedale.view;
 
 import java.awt.Color;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.table.DefaultTableModel;
 import com.ospedale.model.Administrator;
 import com.ospedale.model.Appointment;
-import com.ospedale.model.AppointmentStatus;
 import com.ospedale.model.Doctor;
 import com.ospedale.model.Hospitalization;
 import com.ospedale.model.Patient;
-import com.ospedale.model.RoomType;
 import com.ospedale.model.Specialty;
 import com.ospedale.model.User;
+import com.ospedale.controller.utils.Response;
+import com.ospedale.controller.utils.Status;
+import com.ospedale.controller.AppointmentController;
+import com.ospedale.controller.ViewDataController;
+import com.ospedale.controller.NotificationController;
+import com.ospedale.controller.PatientController;
+import com.ospedale.controller.HospitalizationController;
+
 
 /**
  *
  * @author jjlora
  * @author edangulo
+ * @author orarroyo
+ * @author marianaserrato
  */
 public class PatientDashboardView extends javax.swing.JFrame {
 
@@ -783,11 +789,16 @@ public class PatientDashboardView extends javax.swing.JFrame {
     }//GEN-LAST:event_CloseBtnActionPerformed
 
     private void CancelAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelAppointmentBtnActionPerformed
+        if (AppointmentIDDropdown.getSelectedIndex() <= 0) return;
         String idAppointment = AppointmentIDDropdown.getItemAt(AppointmentIDDropdown.getSelectedIndex());
-        for(Appointment ap: this.appointments){
-            if (ap.getId().equals(idAppointment)) {
-                ap.setStatus(AppointmentStatus.CANCELED);
-            }
+        
+        Response response = AppointmentController.cancelAppointment(
+                idAppointment, String.valueOf(patient.getId()));
+                
+        if (response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_CancelAppointmentBtnActionPerformed
 
@@ -797,29 +808,21 @@ public class PatientDashboardView extends javax.swing.JFrame {
         boolean gender = (GenderDropdown.getSelectedIndex() == 0 ? null : (GenderDropdown.getSelectedIndex() == 1));
         String birth = BirthdateTxt.getText();
         String address = AddressTxt.getText();
-        long phone = Long.parseLong(PhoneTxt.getText());
+        String phoneStr = PhoneTxt.getText();
         String email = EmailTxt.getText();
         String username = UserNameTxt.getText();
         String password = PasswdTxt.getText();
         String comPassword = PasswdConfTxt.getText();
-        LocalDate birthdate = LocalDate.of(Integer.parseInt(birth.substring(0, 4)), Integer.parseInt(birth.substring(5, 7)), Integer.parseInt(birth.substring(8)));
-        if (comPassword.equals(password)) {
-            for (User user : this.users) {
-                if (user.getId() == this.user.getId() && user instanceof Patient) {
-                    Patient userTemp = (Patient) user;
-                    userTemp.setAddress(address);
-                    userTemp.setBirthdate(birthdate);
-                    userTemp.setEmail(email);
-                    userTemp.setFirstname(firstname);
-                    userTemp.setGender(gender);
-                    userTemp.setLastname(lastname);
-                    userTemp.setPassword(password);
-                    userTemp.setPhone(phone);
-                    userTemp.setUsername(username);
-                }
-            }
-        }
+        String idStr = String.valueOf(patient.getId());
 
+        Response response = PatientController.updatePatient(
+                idStr, username, firstname, lastname, password, comPassword, email, birth, gender, phoneStr, address);
+
+        if (response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
+        }
     }//GEN-LAST:event_SaveBtnActionPerformed
 
     private void LogoutBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogoutBtnActionPerformed
@@ -829,9 +832,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
     }//GEN-LAST:event_LogoutBtnActionPerformed
 
     private void BackButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BackButtonActionPerformed
-        AdminDashboardView admin = new AdminDashboardView(user);
-        this.setVisible(false);
-        admin.setVisible(true);
+        com.ospedale.controller.AdminController.navigateBackToAdmin(this, user);
     }//GEN-LAST:event_BackButtonActionPerformed
 
     private void SpecialtySelBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SpecialtySelBtnActionPerformed
@@ -843,7 +844,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
 
         DoctorSelDropdown.addItem("Select one");
         for (Specialty spec : Specialty.values()) {
-            DoctorSelDropdown.addItem(spec.toString().replaceAll("_", " & "));
+            DoctorSelDropdown.addItem(spec.name());
         }
     }//GEN-LAST:event_SpecialtySelBtnActionPerformed
 
@@ -856,52 +857,68 @@ public class PatientDashboardView extends javax.swing.JFrame {
         DoctorSelDropdown.addItem("Select one");
         for (User doc : this.users) {
             if (doc instanceof Doctor) {
-                DoctorSelDropdown.addItem(doc.getFirstname() + " " + doc.getLastname());
+                DoctorSelDropdown.addItem(String.valueOf(doc.getId()));
             }
         }
     }//GEN-LAST:event_DoctorSelBtnActionPerformed
 
     private void CreateAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CreateAppointmentBtnActionPerformed
         String appointDate = AppointmentDateTxt.getText();
-        LocalDate appointmentDate = LocalDate.of(Integer.parseInt(appointDate.substring(0, 4)), Integer.parseInt(appointDate.substring(5, 7)), Integer.parseInt(appointDate.substring(8)));
-        LocalTime appointmentHour = LocalTime.of(Integer.parseInt(AppointmentTimeTxt.getText().substring(0, 2)), Integer.parseInt(AppointmentTimeTxt.getText().substring(3)));
-        LocalDateTime Finally = LocalDateTime.of(appointmentDate, appointmentHour);
+        String appointmentTime = AppointmentTimeTxt.getText();
         String appointmentReason = AppointmentReasonTxt.getText();
-        long docId = Long.parseLong(DoctorSelDropdown.getItemAt(DoctorSelDropdown.getSelectedIndex()));
-        Doctor doctor = null;
-        for(User use:this.users){
-            if (use.getId() == docId) {
-                doctor = (Doctor) use;
+        boolean appointmentType = (AppointmentTypeDropdown.getSelectedIndex() == 2);
+        
+        String doctorId = null;
+        String specialtyStr = null;
+        
+        String selected = DoctorSelDropdown.getItemAt(DoctorSelDropdown.getSelectedIndex());
+        if (selected != null && !selected.equals("Select one")) {
+            if (DoctorSelBtn.isSelected()) {
+                doctorId = selected;
+            } else if (SpecialtySelBtn.isSelected()) {
+                specialtyStr = selected;
             }
         }
-        boolean appointmentType = (AppointmentTypeDropdown.getSelectedIndex() == 0 ? null : (AppointmentTypeDropdown.getSelectedIndex() == 2 ));
-        this.appointments.add(new Appointment(appointDate, patient, doctor, doctor.getSpecialty(), Finally, appointDate, appointmentType));
+
+        Response response = AppointmentController.createAppointment(
+                String.valueOf(patient.getId()), appointDate, appointmentTime, doctorId, specialtyStr, appointmentReason, appointmentType);
+
+        if (response.getStatus() == Status.CREATED) {
+            NotificationController.notifySuccess(response.getMessage(), this);
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
+        }
     }//GEN-LAST:event_CreateAppointmentBtnActionPerformed
 
 
     private void RefreshBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RefreshBtnActionPerformed
-        Patient p = (Patient) user;
+        ViewDataController viewData = new ViewDataController();
+        List<ViewDataController.AppointmentDTO> dtos = viewData.getAppointmentsForUser(String.valueOf(patient.getId()));
+        
         DefaultTableModel model = (DefaultTableModel) AppointmentViewTable.getModel();
         model.setRowCount(0);
-        for (Appointment a : p.getAppointments()) {
-            model.addRow(new Object[]{a.getId(), a.getDatetime().toString(), a.getDoctor().getFirstname() + " " + a.getDoctor().getLastname(), a.getSpecialty().name(), a.isType() ? "In-person" : "Remote", a.getStatus().name()});
+        for (ViewDataController.AppointmentDTO dto : dtos) {
+            model.addRow(new Object[]{dto.id, dto.date + " " + dto.time, dto.doctor, dto.specialty, "In-person/Remote", dto.status});
         }
     }//GEN-LAST:event_RefreshBtnActionPerformed
 
     private void CreateHospReqBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CreateHospReqBtnActionPerformed
         String hospitalizationReason = ReqHospReasonTxt.getText();
-        long idDoctor = Long.parseLong(HospDoctorDropdown.getItemAt(HospDoctorDropdown.getSelectedIndex()));
-        Doctor doc = null;
-        for(User use : this.users){
-            if (use.id  == idDoctor ){
-                doc = (Doctor) use;
-            }
-        }
-        LocalDate stimateDate = LocalDate.of(Integer.parseInt(AdmissionDateTxt.getText().substring(0, 4)),Integer.parseInt(AdmissionDateTxt.getText().substring(5, 7)), Integer.parseInt(AdmissionDateTxt.getText().substring(8)));
+        String stimateDate = AdmissionDateTxt.getText();
         
-        RoomType desireRoom = RoomType.valueOf(DesiredRoomDropdown.getItemAt(DesiredRoomDropdown.getSelectedIndex()).toUpperCase());
-        String observations = HospObservationsTxt.getText();
-        this.hospitalizations.add(new Hospitalization(observations, this.patient, doc, stimateDate, observations, desireRoom, observations));
+        String desireRoom = null;
+        if (DesiredRoomDropdown.getSelectedIndex() >= 0) {
+            desireRoom = DesiredRoomDropdown.getItemAt(DesiredRoomDropdown.getSelectedIndex());
+        }
+
+        Response response = HospitalizationController.createHospitalization(
+                String.valueOf(patient.getId()), stimateDate, hospitalizationReason, desireRoom);
+                
+        if (response.getStatus() == Status.CREATED) {
+            NotificationController.notifySuccess(response.getMessage(), this);
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
+        }
     }//GEN-LAST:event_CreateHospReqBtnActionPerformed
 
 
