@@ -20,10 +20,10 @@ public class DoctorController {
         try {
             Storage storage = Storage.getInstance();
             
-            // 0. Validar permisos (Solo Administrador)
-            // if (!storage.isAdmin(creatorId)) {
-            //    return new Response("Only the administrator can register doctors", Status.BAD_REQUEST);
-            // }
+            //0. Validar permisos (Solo Administrador)
+            if (!storage.isAdmin(creatorId)) {
+               return new Response("Only the administrator can register doctors", Status.BAD_REQUEST);
+            }
 
             // 1. Validar ID: Numérico, > 0, 12 dígitos
             long id;
