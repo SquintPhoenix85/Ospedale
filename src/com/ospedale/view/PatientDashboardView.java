@@ -784,10 +784,11 @@ public class PatientDashboardView extends javax.swing.JFrame {
 
     private void CancelAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelAppointmentBtnActionPerformed
         String idAppointment = AppointmentIDDropdown.getItemAt(AppointmentIDDropdown.getSelectedIndex());
-        for(Appointment ap: this.appointments){
-            if (ap.getId().equals(idAppointment)) {
-                ap.setStatus(AppointmentStatus.CANCELED);
-            }
+        com.ospedale.controller.utils.Response response = com.ospedale.controller.AppointmentController.cancelAppointment(idAppointment, String.valueOf(patient.getId()));
+        if (response.getStatus() == com.ospedale.controller.utils.Status.OK) {
+            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_CancelAppointmentBtnActionPerformed
 
@@ -797,29 +798,18 @@ public class PatientDashboardView extends javax.swing.JFrame {
         boolean gender = (GenderDropdown.getSelectedIndex() == 0 ? null : (GenderDropdown.getSelectedIndex() == 1));
         String birth = BirthdateTxt.getText();
         String address = AddressTxt.getText();
-        long phone = Long.parseLong(PhoneTxt.getText());
+        String phoneStr = PhoneTxt.getText();
         String email = EmailTxt.getText();
         String username = UserNameTxt.getText();
         String password = PasswdTxt.getText();
         String comPassword = PasswdConfTxt.getText();
-        LocalDate birthdate = LocalDate.of(Integer.parseInt(birth.substring(0, 4)), Integer.parseInt(birth.substring(5, 7)), Integer.parseInt(birth.substring(8)));
-        if (comPassword.equals(password)) {
-            for (User user : this.users) {
-                if (user.getId() == this.user.getId() && user instanceof Patient) {
-                    Patient userTemp = (Patient) user;
-                    userTemp.setAddress(address);
-                    userTemp.setBirthdate(birthdate);
-                    userTemp.setEmail(email);
-                    userTemp.setFirstname(firstname);
-                    userTemp.setGender(gender);
-                    userTemp.setLastname(lastname);
-                    userTemp.setPassword(password);
-                    userTemp.setPhone(phone);
-                    userTemp.setUsername(username);
-                }
-            }
+        
+        com.ospedale.controller.utils.Response response = com.ospedale.controller.PatientController.updatePatient(String.valueOf(this.user.getId()), username, firstname, lastname, password, comPassword, email, birth, gender, phoneStr, address);
+        if (response.getStatus() == com.ospedale.controller.utils.Status.OK) {
+            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
         }
-
     }//GEN-LAST:event_SaveBtnActionPerformed
 
     private void LogoutBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogoutBtnActionPerformed
@@ -863,19 +853,33 @@ public class PatientDashboardView extends javax.swing.JFrame {
 
     private void CreateAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CreateAppointmentBtnActionPerformed
         String appointDate = AppointmentDateTxt.getText();
-        LocalDate appointmentDate = LocalDate.of(Integer.parseInt(appointDate.substring(0, 4)), Integer.parseInt(appointDate.substring(5, 7)), Integer.parseInt(appointDate.substring(8)));
-        LocalTime appointmentHour = LocalTime.of(Integer.parseInt(AppointmentTimeTxt.getText().substring(0, 2)), Integer.parseInt(AppointmentTimeTxt.getText().substring(3)));
-        LocalDateTime Finally = LocalDateTime.of(appointmentDate, appointmentHour);
+        String appointmentTime = AppointmentTimeTxt.getText();
         String appointmentReason = AppointmentReasonTxt.getText();
-        long docId = Long.parseLong(DoctorSelDropdown.getItemAt(DoctorSelDropdown.getSelectedIndex()));
-        Doctor doctor = null;
-        for(User use:this.users){
-            if (use.getId() == docId) {
-                doctor = (Doctor) use;
+        
+        String doctorIdStr = null;
+        if (DoctorSelDropdown.getSelectedIndex() > 0) {
+            String doctorName = DoctorSelDropdown.getItemAt(DoctorSelDropdown.getSelectedIndex());
+            for (User u : this.users) {
+                if (u instanceof Doctor && (u.getFirstname() + " " + u.getLastname()).equals(doctorName)) {
+                    doctorIdStr = String.valueOf(u.getId());
+                    break;
+                }
             }
         }
-        boolean appointmentType = (AppointmentTypeDropdown.getSelectedIndex() == 0 ? null : (AppointmentTypeDropdown.getSelectedIndex() == 2 ));
-        this.appointments.add(new Appointment(appointDate, patient, doctor, doctor.getSpecialty(), Finally, appointDate, appointmentType));
+        
+        String specialtyStr = null;
+        if (doctorIdStr == null && DoctorSelDropdown.getSelectedIndex() > 0) {
+             specialtyStr = DoctorSelDropdown.getItemAt(DoctorSelDropdown.getSelectedIndex()).replaceAll(" & ", "_");
+        }
+
+        boolean isRemote = (AppointmentTypeDropdown.getSelectedIndex() != 2);
+        
+        com.ospedale.controller.utils.Response response = com.ospedale.controller.AppointmentController.createAppointment(String.valueOf(patient.getId()), appointDate, appointmentTime, doctorIdStr, specialtyStr, appointmentReason, isRemote);
+        if (response.getStatus() == com.ospedale.controller.utils.Status.CREATED) {
+            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_CreateAppointmentBtnActionPerformed
 
 
@@ -890,18 +894,15 @@ public class PatientDashboardView extends javax.swing.JFrame {
 
     private void CreateHospReqBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CreateHospReqBtnActionPerformed
         String hospitalizationReason = ReqHospReasonTxt.getText();
-        long idDoctor = Long.parseLong(HospDoctorDropdown.getItemAt(HospDoctorDropdown.getSelectedIndex()));
-        Doctor doc = null;
-        for(User use : this.users){
-            if (use.id  == idDoctor ){
-                doc = (Doctor) use;
-            }
-        }
-        LocalDate stimateDate = LocalDate.of(Integer.parseInt(AdmissionDateTxt.getText().substring(0, 4)),Integer.parseInt(AdmissionDateTxt.getText().substring(5, 7)), Integer.parseInt(AdmissionDateTxt.getText().substring(8)));
+        String roomTypeStr = DesiredRoomDropdown.getItemAt(DesiredRoomDropdown.getSelectedIndex()).toUpperCase();
+        String estDate = AdmissionDateTxt.getText();
         
-        RoomType desireRoom = RoomType.valueOf(DesiredRoomDropdown.getItemAt(DesiredRoomDropdown.getSelectedIndex()).toUpperCase());
-        String observations = HospObservationsTxt.getText();
-        this.hospitalizations.add(new Hospitalization(observations, this.patient, doc, stimateDate, observations, desireRoom, observations));
+        com.ospedale.controller.utils.Response response = com.ospedale.controller.HospitalizationController.createHospitalization(String.valueOf(patient.getId()), estDate, hospitalizationReason, roomTypeStr);
+        if (response.getStatus() == com.ospedale.controller.utils.Status.CREATED || response.getStatus() == com.ospedale.controller.utils.Status.OK) {
+            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_CreateHospReqBtnActionPerformed
 
 
