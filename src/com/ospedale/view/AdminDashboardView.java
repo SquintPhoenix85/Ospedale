@@ -11,6 +11,11 @@ import com.ospedale.model.Doctor;
 import com.ospedale.model.Hospitalization;
 import com.ospedale.model.Patient;
 import com.ospedale.model.Specialty;
+import com.ospedale.controller.AdminController;
+import com.ospedale.controller.DoctorController;
+import com.ospedale.controller.NotificationController;
+import com.ospedale.controller.utils.Response;
+import com.ospedale.controller.utils.Status;
 import com.ospedale.model.User;
 import com.ospedale.model.storage.Storage;
 
@@ -18,6 +23,8 @@ import com.ospedale.model.storage.Storage;
  *
  * @author jjlora
  * @author edangulo
+ * @author orarroyo
+ * @author marianaserrato
  */
 public class AdminDashboardView extends javax.swing.JFrame {
 
@@ -436,21 +443,25 @@ public class AdminDashboardView extends javax.swing.JFrame {
     private void DoctorRegistrationBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DoctorRegistrationBtnActionPerformed
         String firstname = FirstNameTxt.getText();
         String lastname = LastNameTxt.getText();
-        long id = Long.parseLong(IDTxt.getText());
+        String idStr = IDTxt.getText();
         String spec = SpecialtyDropdown.getItemAt(SpecialtyDropdown.getSelectedIndex());
         String licenseNumber = LicenseNumberTxt.getText();
         String assignedOffice = OfficeTxt.getText();
         String username = UserNameTxt.getText();
         String password = PasswdTxt.getText();
         String comPassword = PasswdConfTxt.getText();
-        Specialty specialty = Specialty.valueOf(spec.replaceAll(" &", "").replaceAll(" ", "_"));
-        if (password.equals(comPassword)) {
-            Doctor doctor = new Doctor(id, username, firstname, lastname, password, specialty, licenseNumber, assignedOffice);
-            boolean added = Storage.getInstance().addUser(doctor);
-            if (added) {
-                users.add(doctor);
-                DoctorSelectDropdown.addItem(String.valueOf(doctor.getId()));
-            }
+        
+        String specialtyStr = spec.replaceAll(" &", "").replaceAll(" ", "_");
+        
+        Response response = DoctorController.registerDoctor(
+                String.valueOf(user.getId()), idStr, username, firstname, lastname, password, comPassword, specialtyStr, licenseNumber, assignedOffice);
+        
+        if (response.getStatus() == Status.CREATED) {
+            NotificationController.notifySuccess(response.getMessage(), this);
+            // Refresh data simply to add ID to dropdown - UI logic
+            DoctorSelectDropdown.addItem(idStr);
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_DoctorRegistrationBtnActionPerformed
 
@@ -458,15 +469,8 @@ public class AdminDashboardView extends javax.swing.JFrame {
         if (DoctorSelectDropdown.getSelectedIndex() <= 0) {
             return;
         }
-        long idDoctor = Long.parseLong(DoctorSelectDropdown.getItemAt(DoctorSelectDropdown.getSelectedIndex()));
-        Doctor temp = null;
-        for(User use:this.users){
-            if(use.getId() == idDoctor)
-                temp =(Doctor) use;
-        }
-        DoctorDashboardView doctor = new DoctorDashboardView(user,temp, users, hospitalizations,appointments);
-        this.setVisible(false);
-        doctor.setVisible(true);
+        String targetDoctorId = DoctorSelectDropdown.getItemAt(DoctorSelectDropdown.getSelectedIndex());
+        AdminController.launchDoctorDashboard(this, user, targetDoctorId);
     }//GEN-LAST:event_DoctorLaunchBtnActionPerformed
 
     private void LogoutBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LogoutBtnActionPerformed
@@ -480,16 +484,9 @@ public class AdminDashboardView extends javax.swing.JFrame {
         if (PatientSelectDropdown.getSelectedIndex() <= 0) {
             return;
         }
-        long idPatient = Long.parseLong(PatientSelectDropdown.getItemAt(PatientSelectDropdown.getSelectedIndex()));
-        Patient temp = null;
-        for(User use:this.users){
-            if(use.getId() == idPatient)
-                temp =(Patient) use;
-        }
-        PatientDashboardView patient = new PatientDashboardView(user,temp,users,appointments,hospitalizations);
-        this.setVisible(false);
-        patient.setVisible(true);
-    }//GEN-LAST:event_PatientLaunchBtnActionPerformed
+        String targetPatientId = PatientSelectDropdown.getItemAt(PatientSelectDropdown.getSelectedIndex());
+        AdminController.launchPatientDashboard(this, user, targetPatientId);
+    }//GEN-LAST:event_PatientLaunchBtnActionPerformedActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
