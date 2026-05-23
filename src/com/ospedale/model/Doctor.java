@@ -21,7 +21,8 @@ public class Doctor extends User {
 
     public Doctor(long id, String username, String firstname, String lastname, String password, Specialty specialty, String licenceNumber, String assignedOffice) {
         super(id, username, firstname, lastname, password);
-        hospitalizations = new ArrayList<>();
+        this.appointments = new ArrayList<>();
+        this.hospitalizations = new ArrayList<>();
         this.specialty = specialty;
         this.licenceNumber = licenceNumber;
         this.assignedOffice = assignedOffice;
