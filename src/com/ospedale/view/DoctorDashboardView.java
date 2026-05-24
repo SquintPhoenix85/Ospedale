@@ -1291,19 +1291,20 @@ public class DoctorDashboardView extends javax.swing.JFrame {
         
         String appointmentId = AppointmentIDSelDropdown.getItemAt(AppointmentIDSelDropdown.getSelectedIndex());
         String medicationName = MedicationNameTxt.getText();
-        double dose = Double.parseDouble(DoseTxt.getText());
+        String doseStr = DoseTxt.getText();
+        String durationStr = TreatmentDurationTxt.getText();
+        String frequencyStr = FrequencyTxt.getText();
         String administrationRoute = AdministrationRouteTxt.getText();
-        int tratementduration = Integer.parseInt(TreatmentDurationTxt.getText());
         String aditionalIformation = AdditionalInstructionsTxt.getText();
-        int frecuency = Integer.parseInt(FrequencyTxt.getText());
         
-        model.addRow(new Object[]{appointmentId, medicationName, DoseTxt.getText(), administrationRoute, "" + tratementduration, aditionalIformation, "" + frecuency});
-        
-        java.util.ArrayList<Prescription> p = new java.util.ArrayList<>();
-        Appointment apo = Storage.getInstance().getAppointment(appointmentId);
-        if (apo != null) {
-            p.add(new Prescription(apo, medicationName, dose, administrationRoute, tratementduration, aditionalIformation, frecuency));
-            AppointmentController.prescribeMedications(appointmentId, String.valueOf(doctor.getId()), p);
+        com.ospedale.controller.utils.Response response = com.ospedale.controller.PrescriptionController.addPrescriptionToAppointment(
+                appointmentId, String.valueOf(doctor.getId()), medicationName, doseStr, administrationRoute, durationStr, aditionalIformation, frequencyStr);
+
+        if (response.getStatus() == com.ospedale.controller.utils.Status.OK) {
+            model.addRow(new Object[]{appointmentId, medicationName, doseStr, administrationRoute, durationStr, aditionalIformation, frequencyStr});
+            NotificationController.notifySuccess(response.getMessage(), this);
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_AddMedicationButtonActionPerformed
 
