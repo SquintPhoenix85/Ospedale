@@ -12,19 +12,27 @@ import javax.swing.table.DefaultTableModel;
 import com.ospedale.model.Administrator;
 import com.ospedale.model.Appointment;
 import com.ospedale.model.AppointmentStatus;
+import com.ospedale.controller.AppointmentController;
 import com.ospedale.model.Doctor;
 import com.ospedale.model.Hospitalization;
+import com.ospedale.controller.HospitalizationController;
 import com.ospedale.model.HospitalizationStatus;
 import com.ospedale.model.Patient;
 import com.ospedale.model.Prescription;
 import com.ospedale.model.RoomType;
 import com.ospedale.model.Specialty;
 import com.ospedale.model.User;
+import com.ospedale.model.storage.Storage;
+import com.ospedale.controller.utils.Response;
+import com.ospedale.controller.utils.Status;
+import com.ospedale.controller.NotificationController;
 
 /**
  *
  * @author jjlora
  * @author edangulo
+ * @author marianaserrato
+ * @author orarroyo
  */
 public class DoctorDashboardView extends javax.swing.JFrame {
 
@@ -1180,11 +1188,11 @@ public class DoctorDashboardView extends javax.swing.JFrame {
     private void CancelHospBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelHospBtnActionPerformed
         if (RequestSelBtn.isSelected()) {
             String hospId = RequestSelectDropdown.getItemAt(RequestSelectDropdown.getSelectedIndex());
-            com.ospedale.controller.utils.Response response = com.ospedale.controller.HospitalizationController.denyHospitalization(hospId, String.valueOf(doctor.getId()));
-            if (response.getStatus() == com.ospedale.controller.utils.Status.OK) {
-                javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            Response response = HospitalizationController.denyHospitalization(hospId, String.valueOf(doctor.getId()));
+            if (response.getStatus() == Status.OK) {
+                NotificationController.notifySuccess(response.getMessage(), this);
             } else {
-                javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                NotificationController.notifyError(response.getMessage(), this);
             }
         }
     }//GEN-LAST:event_CancelHospBtnActionPerformed
@@ -1192,25 +1200,25 @@ public class DoctorDashboardView extends javax.swing.JFrame {
     private void GenerateHospBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GenerateHospBtnActionPerformed
         if (RequestSelBtn.isSelected()) {
             String hospId = RequestSelectDropdown.getItemAt(RequestSelectDropdown.getSelectedIndex());
-            com.ospedale.controller.utils.Response response = com.ospedale.controller.HospitalizationController.approveHospitalization(hospId, String.valueOf(doctor.getId()));
-            if (response.getStatus() == com.ospedale.controller.utils.Status.OK) {
-                javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            Response response = HospitalizationController.approveHospitalization(hospId, String.valueOf(doctor.getId()));
+            if (response.getStatus() == Status.OK) {
+                NotificationController.notifySuccess(response.getMessage(), this);
             } else {
-                javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                NotificationController.notifyError(response.getMessage(), this);
             }
         } else if (PatientIDSelBtn.isSelected()) {
             String patientId = PatientIDSelDropdown.getItemAt(PatientIDSelDropdown.getSelectedIndex());
             String reason = ReasonHospitalizationTxt.getText();
             String observations = HospObservationsTxt.getText();
             String entDate = HospStartDateTxt.getText();
-            com.ospedale.controller.utils.Response response = com.ospedale.controller.HospitalizationController.createHospitalization(patientId, entDate, reason, "IMC");
-            if (response.getStatus() == com.ospedale.controller.utils.Status.CREATED) {
+            Response response = HospitalizationController.createHospitalization(patientId, entDate, reason, "IMC");
+            if (response.getStatus() == Status.CREATED) {
                 // If created, doctor automatically approves it to assign themselves
-                String newHospId = ((com.ospedale.model.Hospitalization) response.getData()).getId();
-                com.ospedale.controller.HospitalizationController.approveHospitalization(newHospId, String.valueOf(doctor.getId()));
-                javax.swing.JOptionPane.showMessageDialog(this, "Direct Hospitalization created and assigned.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                String newHospId = response.getData().get("hospitalizationId").toString();
+                HospitalizationController.approveHospitalization(newHospId, String.valueOf(doctor.getId()));
+                NotificationController.notifySuccess("Direct Hospitalization created and assigned.", this);
             } else {
-                javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                NotificationController.notifyError(response.getMessage(), this);
             }
         }
     }//GEN-LAST:event_GenerateHospBtnActionPerformed
@@ -1244,22 +1252,22 @@ public class DoctorDashboardView extends javax.swing.JFrame {
 
     private void AcceptanceAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AcceptanceAppointmentBtnActionPerformed
         String idAppointment = AcceptAppointmentSelectorDropdown.getItemAt(AcceptAppointmentSelectorDropdown.getSelectedIndex());
-        com.ospedale.controller.utils.Response response = com.ospedale.controller.AppointmentController.acceptAppointment(idAppointment, String.valueOf(doctor.getId()));
-        if (response.getStatus() == com.ospedale.controller.utils.Status.OK) {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        Response response = AppointmentController.acceptAppointment(idAppointment, String.valueOf(doctor.getId()));
+        if (response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_AcceptanceAppointmentBtnActionPerformed
 
     private void CompleteAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CompleteAppointmentBtnActionPerformed
         String idAppointment = CompleteAppointmentSelectorDropdown.getItemAt(CompleteAppointmentSelectorDropdown.getSelectedIndex());
-        com.ospedale.controller.utils.Response response = com.ospedale.controller.AppointmentController.completeAppointment(idAppointment, String.valueOf(doctor.getId()));
-        if (response.getStatus() == com.ospedale.controller.utils.Status.OK) {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        Response response = AppointmentController.completeAppointment(idAppointment, String.valueOf(doctor.getId()));
+        if (response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
             // Optionally we can update diagnosis, observations, recommendedTrea, followUp on the appointment manually or extend completeAppointment to accept these.
             try {
-                Appointment apo = com.ospedale.model.storage.Storage.getInstance().getAppointment(idAppointment);
+                Appointment apo = Storage.getInstance().getAppointment(idAppointment);
                 if (apo != null) {
                     apo.setDiagnosis(DiagnosisTxt.getText());
                     apo.setFollowUp(FollowUpTxt.getText());
@@ -1268,7 +1276,7 @@ public class DoctorDashboardView extends javax.swing.JFrame {
                 }
             } catch(Exception ignored) {}
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_CompleteAppointmentBtnActionPerformed
 
@@ -1292,10 +1300,10 @@ public class DoctorDashboardView extends javax.swing.JFrame {
         model.addRow(new Object[]{appointmentId, medicationName, DoseTxt.getText(), administrationRoute, "" + tratementduration, aditionalIformation, "" + frecuency});
         
         java.util.ArrayList<Prescription> p = new java.util.ArrayList<>();
-        Appointment apo = com.ospedale.model.storage.Storage.getInstance().getAppointment(appointmentId);
+        Appointment apo = Storage.getInstance().getAppointment(appointmentId);
         if (apo != null) {
             p.add(new Prescription(apo, medicationName, dose, administrationRoute, tratementduration, aditionalIformation, frecuency));
-            com.ospedale.controller.AppointmentController.prescribeMedications(appointmentId, String.valueOf(doctor.getId()), p);
+            AppointmentController.prescribeMedications(appointmentId, String.valueOf(doctor.getId()), p);
         }
     }//GEN-LAST:event_AddMedicationButtonActionPerformed
 
@@ -1303,11 +1311,11 @@ public class DoctorDashboardView extends javax.swing.JFrame {
         String appointmentId = RescheduleAppointmentDropdown.getItemAt(RescheduleAppointmentDropdown.getSelectedIndex());
         String newTimeStr = NewTimeTxt.getText();
         String reasonChangeTime = ReasonTxt.getText();
-        com.ospedale.controller.utils.Response response = com.ospedale.controller.AppointmentController.rescheduleAppointment(appointmentId, String.valueOf(doctor.getId()), newTimeStr, reasonChangeTime);
-        if (response.getStatus() == com.ospedale.controller.utils.Status.OK) {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        Response response = AppointmentController.rescheduleAppointment(appointmentId, String.valueOf(doctor.getId()), newTimeStr, reasonChangeTime);
+        if (response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_AppointmentReschedulingBtnActionPerformed
 
