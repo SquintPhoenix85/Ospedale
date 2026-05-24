@@ -5,34 +5,31 @@
 package com.ospedale.view;
 
 import java.awt.Color;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.table.DefaultTableModel;
 import com.ospedale.model.Administrator;
 import com.ospedale.model.Appointment;
-import com.ospedale.model.AppointmentStatus;
-import com.ospedale.controller.AppointmentController;
-import com.ospedale.controller.HospitalizationController;
 import com.ospedale.model.Doctor;
 import com.ospedale.model.Hospitalization;
 import com.ospedale.model.Patient;
-import com.ospedale.controller.PatientController;
-import com.ospedale.model.RoomType;
 import com.ospedale.model.Specialty;
 import com.ospedale.model.User;
-import com.ospedale.model.storage.Storage;
 import com.ospedale.controller.utils.Response;
 import com.ospedale.controller.utils.Status;
+import com.ospedale.controller.AppointmentController;
+import com.ospedale.controller.ViewDataController;
 import com.ospedale.controller.NotificationController;
+import com.ospedale.controller.PatientController;
+import com.ospedale.controller.HospitalizationController;
+
 
 /**
  *
  * @author jjlora
  * @author edangulo
- * @author marianaserrato
  * @author orarroyo
+ * @author marianaserrato
  */
 public class PatientDashboardView extends javax.swing.JFrame {
 
@@ -792,6 +789,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
     }//GEN-LAST:event_CloseBtnActionPerformed
 
     private void CancelAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelAppointmentBtnActionPerformed
+        if (AppointmentIDDropdown.getSelectedIndex() <= 0) return;
         String idAppointment = AppointmentIDDropdown.getItemAt(AppointmentIDDropdown.getSelectedIndex());
         Response response = AppointmentController.cancelAppointment(idAppointment, String.valueOf(patient.getId()));
         if (response.getStatus() == Status.OK) {
@@ -812,8 +810,11 @@ public class PatientDashboardView extends javax.swing.JFrame {
         String username = UserNameTxt.getText();
         String password = PasswdTxt.getText();
         String comPassword = PasswdConfTxt.getText();
-        
-        Response response = PatientController.updatePatient(String.valueOf(this.user.getId()), username, firstname, lastname, password, comPassword, email, birth, gender, phoneStr, address);
+        String idStr = String.valueOf(patient.getId());
+
+        Response response = PatientController.updatePatient(
+                idStr, username, firstname, lastname, password, comPassword, email, birth, gender, phoneStr, address);
+
         if (response.getStatus() == Status.OK) {
             NotificationController.notifySuccess(response.getMessage(), this);
         } else {
@@ -828,9 +829,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
     }//GEN-LAST:event_LogoutBtnActionPerformed
 
     private void BackButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BackButtonActionPerformed
-        AdminDashboardView admin = new AdminDashboardView(user);
-        this.setVisible(false);
-        admin.setVisible(true);
+        com.ospedale.controller.AdminController.navigateBackToAdmin(this, user);
     }//GEN-LAST:event_BackButtonActionPerformed
 
     private void SpecialtySelBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SpecialtySelBtnActionPerformed
@@ -842,7 +841,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
 
         DoctorSelDropdown.addItem("Select one");
         for (Specialty spec : Specialty.values()) {
-            DoctorSelDropdown.addItem(spec.toString().replaceAll("_", " & "));
+            DoctorSelDropdown.addItem(spec.name());
         }
     }//GEN-LAST:event_SpecialtySelBtnActionPerformed
 
@@ -855,7 +854,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
         DoctorSelDropdown.addItem("Select one");
         for (User doc : this.users) {
             if (doc instanceof Doctor) {
-                DoctorSelDropdown.addItem(doc.getFirstname() + " " + doc.getLastname());
+                DoctorSelDropdown.addItem(String.valueOf(doc.getId()));
             }
         }
     }//GEN-LAST:event_DoctorSelBtnActionPerformed
@@ -864,26 +863,23 @@ public class PatientDashboardView extends javax.swing.JFrame {
         String appointDate = AppointmentDateTxt.getText();
         String appointmentTime = AppointmentTimeTxt.getText();
         String appointmentReason = AppointmentReasonTxt.getText();
+        boolean appointmentType = (AppointmentTypeDropdown.getSelectedIndex() == 2);
         
-        String doctorIdStr = null;
-        if (DoctorSelDropdown.getSelectedIndex() > 0) {
-            String doctorName = DoctorSelDropdown.getItemAt(DoctorSelDropdown.getSelectedIndex());
-            for (User u : this.users) {
-                if (u instanceof Doctor && (u.getFirstname() + " " + u.getLastname()).equals(doctorName)) {
-                    doctorIdStr = String.valueOf(u.getId());
-                    break;
-                }
+        String doctorId = null;
+        String specialtyStr = null;
+        
+        String selected = DoctorSelDropdown.getItemAt(DoctorSelDropdown.getSelectedIndex());
+        if (selected != null && !selected.equals("Select one")) {
+            if (DoctorSelBtn.isSelected()) {
+                doctorId = selected;
+            } else if (SpecialtySelBtn.isSelected()) {
+                specialtyStr = selected;
             }
         }
-        
-        String specialtyStr = null;
-        if (doctorIdStr == null && DoctorSelDropdown.getSelectedIndex() > 0) {
-             specialtyStr = DoctorSelDropdown.getItemAt(DoctorSelDropdown.getSelectedIndex()).replaceAll(" & ", "_");
-        }
 
-        boolean isRemote = (AppointmentTypeDropdown.getSelectedIndex() != 2);
-        
-        Response response = AppointmentController.createAppointment(String.valueOf(patient.getId()), appointDate, appointmentTime, doctorIdStr, specialtyStr, appointmentReason, isRemote);
+        Response response = AppointmentController.createAppointment(
+                String.valueOf(patient.getId()), appointDate, appointmentTime, doctorId, specialtyStr, appointmentReason, appointmentType);
+
         if (response.getStatus() == Status.CREATED) {
             NotificationController.notifySuccess(response.getMessage(), this);
         } else {
@@ -893,21 +889,29 @@ public class PatientDashboardView extends javax.swing.JFrame {
 
 
     private void RefreshBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RefreshBtnActionPerformed
-        Patient p = (Patient) user;
+        ViewDataController viewData = new ViewDataController();
+        List<ViewDataController.AppointmentDTO> dtos = viewData.getAppointmentsForUser(String.valueOf(patient.getId()));
+        
         DefaultTableModel model = (DefaultTableModel) AppointmentViewTable.getModel();
         model.setRowCount(0);
-        for (Appointment a : p.getAppointments()) {
-            model.addRow(new Object[]{a.getId(), a.getDatetime().toString(), a.getDoctor().getFirstname() + " " + a.getDoctor().getLastname(), a.getSpecialty().name(), a.isType() ? "In-person" : "Remote", a.getStatus().name()});
+        for (ViewDataController.AppointmentDTO dto : dtos) {
+            model.addRow(new Object[]{dto.id, dto.date + " " + dto.time, dto.doctor, dto.specialty, "In-person/Remote", dto.status});
         }
     }//GEN-LAST:event_RefreshBtnActionPerformed
 
     private void CreateHospReqBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CreateHospReqBtnActionPerformed
         String hospitalizationReason = ReqHospReasonTxt.getText();
-        String roomTypeStr = DesiredRoomDropdown.getItemAt(DesiredRoomDropdown.getSelectedIndex()).toUpperCase();
-        String estDate = AdmissionDateTxt.getText();
+        String stimateDate = AdmissionDateTxt.getText();
         
-        Response response = HospitalizationController.createHospitalization(String.valueOf(patient.getId()), estDate, hospitalizationReason, roomTypeStr);
-        if (response.getStatus() == Status.CREATED || response.getStatus() == Status.OK) {
+        String desireRoom = null;
+        if (DesiredRoomDropdown.getSelectedIndex() >= 0) {
+            desireRoom = DesiredRoomDropdown.getItemAt(DesiredRoomDropdown.getSelectedIndex());
+        }
+
+        Response response = HospitalizationController.createHospitalization(
+                String.valueOf(patient.getId()), stimateDate, hospitalizationReason, desireRoom);
+                
+        if (response.getStatus() == Status.CREATED) {
             NotificationController.notifySuccess(response.getMessage(), this);
         } else {
             NotificationController.notifyError(response.getMessage(), this);
