@@ -12,19 +12,27 @@ import javax.swing.table.DefaultTableModel;
 import com.ospedale.model.Administrator;
 import com.ospedale.model.Appointment;
 import com.ospedale.model.AppointmentStatus;
+import com.ospedale.controller.AppointmentController;
 import com.ospedale.model.Doctor;
 import com.ospedale.model.Hospitalization;
+import com.ospedale.controller.HospitalizationController;
 import com.ospedale.model.HospitalizationStatus;
 import com.ospedale.model.Patient;
 import com.ospedale.model.Prescription;
 import com.ospedale.model.RoomType;
 import com.ospedale.model.Specialty;
 import com.ospedale.model.User;
+import com.ospedale.model.storage.Storage;
+import com.ospedale.controller.utils.Response;
+import com.ospedale.controller.utils.Status;
+import com.ospedale.controller.NotificationController;
 
 /**
  *
  * @author jjlora
  * @author edangulo
+ * @author marianaserrato
+ * @author orarroyo
  */
 public class DoctorDashboardView extends javax.swing.JFrame {
 
@@ -1179,28 +1187,38 @@ public class DoctorDashboardView extends javax.swing.JFrame {
 
     private void CancelHospBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelHospBtnActionPerformed
         if (RequestSelBtn.isSelected()) {
-            for(Hospitalization hosp : this.hospitalizations){
-                if (RequestSelectDropdown.getItemAt(RequestSelectDropdown.getSelectedIndex()) == hosp.getId()) {
-                    hosp.setStatus(HospitalizationStatus.CANCELED);
-                }
+            String hospId = RequestSelectDropdown.getItemAt(RequestSelectDropdown.getSelectedIndex());
+            Response response = HospitalizationController.denyHospitalization(hospId, String.valueOf(doctor.getId()));
+            if (response.getStatus() == Status.OK) {
+                NotificationController.notifySuccess(response.getMessage(), this);
+            } else {
+                NotificationController.notifyError(response.getMessage(), this);
             }
         }
     }//GEN-LAST:event_CancelHospBtnActionPerformed
 
     private void GenerateHospBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GenerateHospBtnActionPerformed
-        if (PatientIDSelBtn.isSelected()) {
-            for(User user: this.users){
-                if (user instanceof Patient) {
-                    if (PatientIDSelDropdown.getItemAt(PatientIDSelDropdown.getSelectedIndex()).equals(user.getId())) {
-                        if (this.user instanceof Administrator) {
-                            String reason = ReasonHospitalizationTxt.getText();
-                            String observations = HospObservationsTxt.getText();
-                            String entDate = HospStartDateTxt.getText();
-                            LocalDate entryDate = LocalDate.of(Integer.parseInt(entDate.substring(0, 4)), Integer.parseInt(entDate.substring(5, 7)), Integer.parseInt(entDate.substring(8)));
-                            this.hospitalizations.add(new Hospitalization("asdfasdf", (Patient)user, this.doctor, LocalDate.MAX, reason, RoomType.IMC, observations, HospitalizationStatus.ONGOING));
-                        }
-                    }
-                }
+        if (RequestSelBtn.isSelected()) {
+            String hospId = RequestSelectDropdown.getItemAt(RequestSelectDropdown.getSelectedIndex());
+            Response response = HospitalizationController.approveHospitalization(hospId, String.valueOf(doctor.getId()));
+            if (response.getStatus() == Status.OK) {
+                NotificationController.notifySuccess(response.getMessage(), this);
+            } else {
+                NotificationController.notifyError(response.getMessage(), this);
+            }
+        } else if (PatientIDSelBtn.isSelected()) {
+            String patientId = PatientIDSelDropdown.getItemAt(PatientIDSelDropdown.getSelectedIndex());
+            String reason = ReasonHospitalizationTxt.getText();
+            String observations = HospObservationsTxt.getText();
+            String entDate = HospStartDateTxt.getText();
+            Response response = HospitalizationController.createHospitalization(patientId, entDate, reason, "IMC");
+            if (response.getStatus() == Status.CREATED) {
+                // If created, doctor automatically approves it to assign themselves
+                String newHospId = response.getData().get("hospitalizationId").toString();
+                HospitalizationController.approveHospitalization(newHospId, String.valueOf(doctor.getId()));
+                NotificationController.notifySuccess("Direct Hospitalization created and assigned.", this);
+            } else {
+                NotificationController.notifyError(response.getMessage(), this);
             }
         }
     }//GEN-LAST:event_GenerateHospBtnActionPerformed
@@ -1234,27 +1252,31 @@ public class DoctorDashboardView extends javax.swing.JFrame {
 
     private void AcceptanceAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AcceptanceAppointmentBtnActionPerformed
         String idAppointment = AcceptAppointmentSelectorDropdown.getItemAt(AcceptAppointmentSelectorDropdown.getSelectedIndex());
-        for(Appointment apo: this.appointments){
-            if(apo.getId() == idAppointment){
-                apo.setStatus(AppointmentStatus.PENDING);
-            }
+        Response response = AppointmentController.acceptAppointment(idAppointment, String.valueOf(doctor.getId()));
+        if (response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_AcceptanceAppointmentBtnActionPerformed
 
     private void CompleteAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CompleteAppointmentBtnActionPerformed
         String idAppointment = CompleteAppointmentSelectorDropdown.getItemAt(CompleteAppointmentSelectorDropdown.getSelectedIndex());
-        String diagnosis = DiagnosisTxt.getText();
-        String observations = AppointmentObservationsTxt.getText();
-        String recommendedTrea = TreatmentTxt.getText();
-        String followUp = FollowUpTxt.getText();
-        for(Appointment apo: this.appointments){
-            if(apo.getId() == idAppointment){
-                apo.setStatus(AppointmentStatus.CANCELED);
-                apo.setDiagnosis(diagnosis);
-                apo.setFollowUp(followUp);
-                apo.setRecommendedTreatment(recommendedTrea);
-                apo.setObservations(observations);
-            }
+        Response response = AppointmentController.completeAppointment(idAppointment, String.valueOf(doctor.getId()));
+        if (response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
+            // Optionally we can update diagnosis, observations, recommendedTrea, followUp on the appointment manually or extend completeAppointment to accept these.
+            try {
+                Appointment apo = Storage.getInstance().getAppointment(idAppointment);
+                if (apo != null) {
+                    apo.setDiagnosis(DiagnosisTxt.getText());
+                    apo.setFollowUp(FollowUpTxt.getText());
+                    apo.setRecommendedTreatment(TreatmentTxt.getText());
+                    apo.setObservations(AppointmentObservationsTxt.getText());
+                }
+            } catch(Exception ignored) {}
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_CompleteAppointmentBtnActionPerformed
 
@@ -1265,7 +1287,7 @@ public class DoctorDashboardView extends javax.swing.JFrame {
 
     private void AddMedicationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddMedicationButtonActionPerformed
         // TODO add your handling code here:
-        DefaultTableModel model = (DefaultTableModel) MedicationDisplayTable.getModel();
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) MedicationDisplayTable.getModel();
         
         String appointmentId = AppointmentIDSelDropdown.getItemAt(AppointmentIDSelDropdown.getSelectedIndex());
         String medicationName = MedicationNameTxt.getText();
@@ -1276,24 +1298,25 @@ public class DoctorDashboardView extends javax.swing.JFrame {
         int frecuency = Integer.parseInt(FrequencyTxt.getText());
         
         model.addRow(new Object[]{appointmentId, medicationName, DoseTxt.getText(), administrationRoute, "" + tratementduration, aditionalIformation, "" + frecuency});
-        for(Appointment apo: this.appointments){
-            if (apo.getId().equals(appointmentId)){
-                apo.addPrescription(new Prescription(apo, medicationName, dose, administrationRoute, tratementduration, aditionalIformation, frecuency));
-            }
+        
+        java.util.ArrayList<Prescription> p = new java.util.ArrayList<>();
+        Appointment apo = Storage.getInstance().getAppointment(appointmentId);
+        if (apo != null) {
+            p.add(new Prescription(apo, medicationName, dose, administrationRoute, tratementduration, aditionalIformation, frecuency));
+            AppointmentController.prescribeMedications(appointmentId, String.valueOf(doctor.getId()), p);
         }
     }//GEN-LAST:event_AddMedicationButtonActionPerformed
 
     private void AppointmentReschedulingBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AppointmentReschedulingBtnActionPerformed
         String appointmentId = RescheduleAppointmentDropdown.getItemAt(RescheduleAppointmentDropdown.getSelectedIndex());
-        Appointment appointment = null;
-        for(Appointment apo: this.appointments){
-            if (apo.getId().equals(appointmentId)) {
-                appointment = apo;
-            }
-        }
-        appointment.getDatetime().with(LocalTime.of(Integer.parseInt(NewTimeTxt.getText().substring(0, 2)),Integer.parseInt(NewTimeTxt.getText().substring(3))));
+        String newTimeStr = NewTimeTxt.getText();
         String reasonChangeTime = ReasonTxt.getText();
-        appointment.setReason(reasonChangeTime);
+        Response response = AppointmentController.rescheduleAppointment(appointmentId, String.valueOf(doctor.getId()), newTimeStr, reasonChangeTime);
+        if (response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
+        }
     }//GEN-LAST:event_AppointmentReschedulingBtnActionPerformed
 
 

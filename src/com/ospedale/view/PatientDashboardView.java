@@ -791,10 +791,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
     private void CancelAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelAppointmentBtnActionPerformed
         if (AppointmentIDDropdown.getSelectedIndex() <= 0) return;
         String idAppointment = AppointmentIDDropdown.getItemAt(AppointmentIDDropdown.getSelectedIndex());
-        
-        Response response = AppointmentController.cancelAppointment(
-                idAppointment, String.valueOf(patient.getId()));
-                
+        Response response = AppointmentController.cancelAppointment(idAppointment, String.valueOf(patient.getId()));
         if (response.getStatus() == Status.OK) {
             NotificationController.notifySuccess(response.getMessage(), this);
         } else {

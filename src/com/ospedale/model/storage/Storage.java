@@ -75,7 +75,14 @@ public class Storage {
                         break;
                     }
                     case "doctor": {
-                        String specialty = jo.optString("specialty", "GENERAL");
+                        String specialty = jo.optString("specialty", "GENERAL_MEDICINE");
+                        if (specialty.equals("ORTHOPEDICS") || specialty.equals("TRAUMATOLOGY")) {
+                            specialty = "TRAUMATOLOGY_ORTHOPEDICS";
+                        }
+                        if (specialty.equals("GYNECOLOGY") || specialty.equals("OBSTETRICS")) {
+                            specialty = "GYNECOLOGY_OBSTETRICS";
+                        }
+                        if (specialty.equals("GENERAL")) specialty = "GENERAL_MEDICINE";
                         String licence = jo.optString("licenceNumber", "");
                         String office = jo.optString("assignedOffice", "");
                         Specialty spec = Specialty.valueOf(specialty.toUpperCase());
