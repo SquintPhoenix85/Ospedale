@@ -13,17 +13,26 @@ import javax.swing.table.DefaultTableModel;
 import com.ospedale.model.Administrator;
 import com.ospedale.model.Appointment;
 import com.ospedale.model.AppointmentStatus;
+import com.ospedale.controller.AppointmentController;
+import com.ospedale.controller.HospitalizationController;
 import com.ospedale.model.Doctor;
 import com.ospedale.model.Hospitalization;
 import com.ospedale.model.Patient;
+import com.ospedale.controller.PatientController;
 import com.ospedale.model.RoomType;
 import com.ospedale.model.Specialty;
 import com.ospedale.model.User;
+import com.ospedale.model.storage.Storage;
+import com.ospedale.controller.utils.Response;
+import com.ospedale.controller.utils.Status;
+import com.ospedale.controller.NotificationController;
 
 /**
  *
  * @author jjlora
  * @author edangulo
+ * @author marianaserrato
+ * @author orarroyo
  */
 public class PatientDashboardView extends javax.swing.JFrame {
 
@@ -784,11 +793,11 @@ public class PatientDashboardView extends javax.swing.JFrame {
 
     private void CancelAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelAppointmentBtnActionPerformed
         String idAppointment = AppointmentIDDropdown.getItemAt(AppointmentIDDropdown.getSelectedIndex());
-        com.ospedale.controller.utils.Response response = com.ospedale.controller.AppointmentController.cancelAppointment(idAppointment, String.valueOf(patient.getId()));
-        if (response.getStatus() == com.ospedale.controller.utils.Status.OK) {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        Response response = AppointmentController.cancelAppointment(idAppointment, String.valueOf(patient.getId()));
+        if (response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_CancelAppointmentBtnActionPerformed
 
@@ -804,11 +813,11 @@ public class PatientDashboardView extends javax.swing.JFrame {
         String password = PasswdTxt.getText();
         String comPassword = PasswdConfTxt.getText();
         
-        com.ospedale.controller.utils.Response response = com.ospedale.controller.PatientController.updatePatient(String.valueOf(this.user.getId()), username, firstname, lastname, password, comPassword, email, birth, gender, phoneStr, address);
-        if (response.getStatus() == com.ospedale.controller.utils.Status.OK) {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        Response response = PatientController.updatePatient(String.valueOf(this.user.getId()), username, firstname, lastname, password, comPassword, email, birth, gender, phoneStr, address);
+        if (response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_SaveBtnActionPerformed
 
@@ -874,11 +883,11 @@ public class PatientDashboardView extends javax.swing.JFrame {
 
         boolean isRemote = (AppointmentTypeDropdown.getSelectedIndex() != 2);
         
-        com.ospedale.controller.utils.Response response = com.ospedale.controller.AppointmentController.createAppointment(String.valueOf(patient.getId()), appointDate, appointmentTime, doctorIdStr, specialtyStr, appointmentReason, isRemote);
-        if (response.getStatus() == com.ospedale.controller.utils.Status.CREATED) {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        Response response = AppointmentController.createAppointment(String.valueOf(patient.getId()), appointDate, appointmentTime, doctorIdStr, specialtyStr, appointmentReason, isRemote);
+        if (response.getStatus() == Status.CREATED) {
+            NotificationController.notifySuccess(response.getMessage(), this);
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_CreateAppointmentBtnActionPerformed
 
@@ -897,11 +906,11 @@ public class PatientDashboardView extends javax.swing.JFrame {
         String roomTypeStr = DesiredRoomDropdown.getItemAt(DesiredRoomDropdown.getSelectedIndex()).toUpperCase();
         String estDate = AdmissionDateTxt.getText();
         
-        com.ospedale.controller.utils.Response response = com.ospedale.controller.HospitalizationController.createHospitalization(String.valueOf(patient.getId()), estDate, hospitalizationReason, roomTypeStr);
-        if (response.getStatus() == com.ospedale.controller.utils.Status.CREATED || response.getStatus() == com.ospedale.controller.utils.Status.OK) {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        Response response = HospitalizationController.createHospitalization(String.valueOf(patient.getId()), estDate, hospitalizationReason, roomTypeStr);
+        if (response.getStatus() == Status.CREATED || response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, response.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_CreateHospReqBtnActionPerformed
 
