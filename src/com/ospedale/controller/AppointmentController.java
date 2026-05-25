@@ -135,6 +135,10 @@ public class AppointmentController {
     }
 
     public static Response completeAppointment(String appointmentId, String doctorId) {
+        return completeAppointment(appointmentId, doctorId, null, null, null, null);
+    }
+
+    public static Response completeAppointment(String appointmentId, String doctorId, String diagnosis, String observations, String recommendedTreatment, String followUp) {
         try {
             Storage storage = Storage.getInstance();
             Appointment appointment = storage.getAppointment(appointmentId);
@@ -150,6 +154,18 @@ public class AppointmentController {
             }
 
             appointment.setStatus(AppointmentStatus.COMPLETED);
+            if (diagnosis != null) {
+                appointment.setDiagnosis(diagnosis);
+            }
+            if (observations != null) {
+                appointment.setObservations(observations);
+            }
+            if (recommendedTreatment != null) {
+                appointment.setRecommendedTreatment(recommendedTreatment);
+            }
+            if (followUp != null) {
+                appointment.setFollowUp(followUp);
+            }
             return new Response("Appointment completed successfully", Status.OK);
 
         } catch (Exception ex) {

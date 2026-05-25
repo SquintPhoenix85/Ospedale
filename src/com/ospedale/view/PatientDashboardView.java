@@ -802,7 +802,12 @@ public class PatientDashboardView extends javax.swing.JFrame {
     private void SaveBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveBtnActionPerformed
         String firstname = FirstNameTxt.getText();
         String lastname = LastNameTxt.getText();
-        boolean gender = (GenderDropdown.getSelectedIndex() == 0 ? null : (GenderDropdown.getSelectedIndex() == 1));
+        Boolean gender = null;
+        if (GenderDropdown.getSelectedIndex() == 1) {
+            gender = Boolean.FALSE;
+        } else if (GenderDropdown.getSelectedIndex() == 2) {
+            gender = Boolean.TRUE;
+        }
         String birth = BirthdateTxt.getText();
         String address = AddressTxt.getText();
         String phoneStr = PhoneTxt.getText();
@@ -812,8 +817,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
         String comPassword = PasswdConfTxt.getText();
         String idStr = String.valueOf(patient.getId());
 
-        Response response = PatientController.updatePatient(
-                idStr, username, firstname, lastname, password, comPassword, email, birth, gender, phoneStr, address);
+        Response response = PatientController.updatePatient(idStr, username, firstname, lastname, password, comPassword, email, birth, gender, phoneStr, address);
 
         if (response.getStatus() == Status.OK) {
             NotificationController.notifySuccess(response.getMessage(), this);

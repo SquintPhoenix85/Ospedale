@@ -8,11 +8,13 @@ import java.awt.Color;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import javax.swing.table.DefaultTableModel;
 import com.ospedale.model.Administrator;
 import com.ospedale.model.Appointment;
 import com.ospedale.model.AppointmentStatus;
 import com.ospedale.controller.AppointmentController;
+import com.ospedale.controller.DoctorController;
 import com.ospedale.model.Doctor;
 import com.ospedale.model.Hospitalization;
 import com.ospedale.controller.HospitalizationController;
@@ -26,6 +28,7 @@ import com.ospedale.model.storage.Storage;
 import com.ospedale.controller.utils.Response;
 import com.ospedale.controller.utils.Status;
 import com.ospedale.controller.NotificationController;
+import com.ospedale.controller.PrescriptionController;
 
 /**
  *
@@ -1137,13 +1140,23 @@ public class DoctorDashboardView extends javax.swing.JFrame {
     private void FilterPendingAppointmentsBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_FilterPendingAppointmentsBtnActionPerformed
         // TODO add your handling code here:
         FilterTotalAppointmentsBtn.setSelected(false);
-        Doctor d = (Doctor) user;
-        DefaultTableModel model = (DefaultTableModel) AppointmentDisplayTable.getModel();
-        model.setRowCount(0);
-        for (Appointment a : d.getAppointments()) {
-            if (a.getStatus().equals(AppointmentStatus.PENDING)) {
-                model.addRow(new Object[]{a.getId(), a.getDatetime().toString(), a.getPatient().getFirstname() + " " + a.getDoctor().getLastname(), a.getSpecialty().name(), a.isType() ? "In person" : "Virtual", a.getStatus().name()});
+        Response response = AppointmentController.getAppointmentsByDoctor(String.valueOf(doctor.getId()), true);
+        if (response.getStatus() == Status.OK) {
+            DefaultTableModel model = (DefaultTableModel) AppointmentDisplayTable.getModel();
+            model.setRowCount(0);
+            ArrayList<HashMap<String, Object>> doctorAppointments = response.getDataList();
+            for (HashMap<String, Object> appointmentData : doctorAppointments) {
+                model.addRow(new Object[]{
+                    appointmentData.get("id"),
+                    appointmentData.get("datetime"),
+                    appointmentData.get("patientName"),
+                    appointmentData.get("specialty"),
+                    Boolean.TRUE.equals(appointmentData.get("type")) ? "In person" : "Virtual",
+                    appointmentData.get("status")
+                });
             }
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_FilterPendingAppointmentsBtnActionPerformed
 
@@ -1156,20 +1169,25 @@ public class DoctorDashboardView extends javax.swing.JFrame {
         String username = UserNameRegistrationTxt.getText();
         String password = PasswdTxt.getText();
         String comPassword = PasswdConfTxt.getText();
-        Specialty specialty = Specialty.valueOf(spec.replaceAll(" &", "").replaceAll(" ", "_"));
-        if (password.equals(comPassword)) {
-            for(User doc: this.users){
-                if (doctor.getId() == doc.getId()) {
-                    doctor.setFirstname(firstname);
-                    doctor.setLastname(lastname);
-                    doctor.setPassword(password);
-                    doctor.setUsername(username);
-                    doctor.setAssignedOffice(assignedOffice);
-                    doctor.setLicenceNumber(licenseNumber);
-                    doctor.setSpecialty(specialty);
-                    
-                }
-            }
+        Response response = DoctorController.updateDoctor(
+            String.valueOf(user.getId()),
+            String.valueOf(doctor.getId()),
+            username,
+            firstname,
+            lastname,
+            password,
+            comPassword,
+            spec,
+            licenseNumber,
+            assignedOffice
+        );
+
+        if (response.getStatus() == Status.OK) {
+            NotificationController.notifySuccess(response.getMessage(), this);
+        } else if (response.getStatus() == Status.BAD_REQUEST || response.getStatus() == Status.NOT_FOUND) {
+            NotificationController.notifyInfo(response.getMessage(), this);
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_RegisterBtnActionPerformed
 
@@ -1225,28 +1243,51 @@ public class DoctorDashboardView extends javax.swing.JFrame {
 
     private void SearchBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SearchBtnActionPerformed
         // TODO add your handling code here:
-        Patient p = null;
-        for (User u : this.users) {
-            if (u.getId() == Long.parseLong(PatientSelectDropdown.getItemAt(PatientSelectDropdown.getSelectedIndex()))) {
-                p = (Patient) u;
+        String selected = PatientSelectDropdown.getItemAt(PatientSelectDropdown.getSelectedIndex());
+        if (selected == null || "Select one".equals(selected)){
+            NotificationController.notifyError("Please select a patient first.", this);
+        } else {
+            Response response = AppointmentController.getAppointmentsByPatient(selected);
+            if (response.getStatus() == Status.OK) {
+                DefaultTableModel model = (DefaultTableModel) HistoricalAppointmentsTable.getModel();
+                model.setRowCount(0);
+                ArrayList<HashMap<String, Object>> patientAppointments = response.getDataList();
+                for (HashMap<String, Object> appointmentData : patientAppointments) {
+                    model.addRow(new Object[]{
+                        appointmentData.get("id"),
+                        appointmentData.get("datetime"),
+                        appointmentData.get("doctorName"),
+                        appointmentData.get("specialty"),
+                        Boolean.TRUE.equals(appointmentData.get("type")) ? "In-person" : "Remote",
+                        appointmentData.get("status")
+                    });
+                }
+            } else {
+                NotificationController.notifyError(response.getMessage(), this);
             }
-        }
-        
-        DefaultTableModel model = (DefaultTableModel) HistoricalAppointmentsTable.getModel();
-        model.setRowCount(0);
-        for (Appointment a : p.getAppointments()) {
-            model.addRow(new Object[]{a.getId(), a.getDatetime().toString(), a.getDoctor().getFirstname() + " " + a.getDoctor().getLastname(), a.getSpecialty().name(), a.isType() ? "In-person" : "Remote", a.getStatus().name()});
         }
     }//GEN-LAST:event_SearchBtnActionPerformed
 
     private void FilterTotalAppointmentsBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_FilterTotalAppointmentsBtnActionPerformed
         // TODO add your handling code here:
         FilterPendingAppointmentsBtn.setSelected(false);
-        Doctor d = (Doctor) user;
-        DefaultTableModel model = (DefaultTableModel) AppointmentDisplayTable.getModel();
-        model.setRowCount(0);
-        for (Appointment a : d.getAppointments()) {
-            model.addRow(new Object[]{a.getId(), a.getDatetime().toString(), a.getPatient().getFirstname() + " " + a.getDoctor().getLastname(), a.getSpecialty().name(), a.isType() ? "In-person" : "Remote", a.getStatus().name()});
+        Response response = AppointmentController.getAppointmentsByDoctor(String.valueOf(doctor.getId()), false);
+        if (response.getStatus() == Status.OK) {
+            DefaultTableModel model = (DefaultTableModel) AppointmentDisplayTable.getModel();
+            model.setRowCount(0);
+            ArrayList<HashMap<String, Object>> doctorAppointments = response.getDataList();
+            for (HashMap<String, Object> appointmentData : doctorAppointments) {
+                model.addRow(new Object[]{
+                    appointmentData.get("id"),
+                    appointmentData.get("datetime"),
+                    appointmentData.get("patientName"),
+                    appointmentData.get("specialty"),
+                    Boolean.TRUE.equals(appointmentData.get("type")) ? "In person" : "Remote",
+                    appointmentData.get("status")
+                });
+            }
+        } else {
+            NotificationController.notifyError(response.getMessage(), this);
         }
     }//GEN-LAST:event_FilterTotalAppointmentsBtnActionPerformed
 
@@ -1262,19 +1303,18 @@ public class DoctorDashboardView extends javax.swing.JFrame {
 
     private void CompleteAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CompleteAppointmentBtnActionPerformed
         String idAppointment = CompleteAppointmentSelectorDropdown.getItemAt(CompleteAppointmentSelectorDropdown.getSelectedIndex());
-        Response response = AppointmentController.completeAppointment(idAppointment, String.valueOf(doctor.getId()));
+        Response response = AppointmentController.completeAppointment(
+            idAppointment,
+            String.valueOf(doctor.getId()),
+            DiagnosisTxt.getText(),
+            AppointmentObservationsTxt.getText(),
+            TreatmentTxt.getText(),
+            FollowUpTxt.getText()
+        );
         if (response.getStatus() == Status.OK) {
             NotificationController.notifySuccess(response.getMessage(), this);
-            // Optionally we can update diagnosis, observations, recommendedTrea, followUp on the appointment manually or extend completeAppointment to accept these.
-            try {
-                Appointment apo = Storage.getInstance().getAppointment(idAppointment);
-                if (apo != null) {
-                    apo.setDiagnosis(DiagnosisTxt.getText());
-                    apo.setFollowUp(FollowUpTxt.getText());
-                    apo.setRecommendedTreatment(TreatmentTxt.getText());
-                    apo.setObservations(AppointmentObservationsTxt.getText());
-                }
-            } catch(Exception ignored) {}
+        } else if (response.getStatus() == Status.BAD_REQUEST || response.getStatus() == Status.NOT_FOUND) {
+            NotificationController.notifyInfo(response.getMessage(), this);
         } else {
             NotificationController.notifyError(response.getMessage(), this);
         }
@@ -1297,10 +1337,9 @@ public class DoctorDashboardView extends javax.swing.JFrame {
         String administrationRoute = AdministrationRouteTxt.getText();
         String aditionalIformation = AdditionalInstructionsTxt.getText();
         
-        com.ospedale.controller.utils.Response response = com.ospedale.controller.PrescriptionController.addPrescriptionToAppointment(
-                appointmentId, String.valueOf(doctor.getId()), medicationName, doseStr, administrationRoute, durationStr, aditionalIformation, frequencyStr);
+        Response response = PrescriptionController.addPrescriptionToAppointment(appointmentId, String.valueOf(doctor.getId()), medicationName, doseStr, administrationRoute, durationStr, aditionalIformation, frequencyStr);
 
-        if (response.getStatus() == com.ospedale.controller.utils.Status.OK) {
+        if (response.getStatus() == Status.OK) {
             model.addRow(new Object[]{appointmentId, medicationName, doseStr, administrationRoute, durationStr, aditionalIformation, frequencyStr});
             NotificationController.notifySuccess(response.getMessage(), this);
         } else {

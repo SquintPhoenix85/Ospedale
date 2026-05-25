@@ -88,7 +88,7 @@ public class PatientController {
         }
     }
 
-    public static Response updatePatient(String idStr, String newUsername, String newFirstname, String newLastname, String newPassword, String confirmNewPassword, String newEmail, String newBirthdateStr, boolean newGender, String newPhoneStr, String newAddress) {
+    public static Response updatePatient(String idStr, String newUsername, String newFirstname, String newLastname, String newPassword, String confirmNewPassword, String newEmail, String newBirthdateStr, Boolean newGender, String newPhoneStr, String newAddress) {
         try {
             Storage storage = Storage.getInstance();
             
@@ -137,6 +137,10 @@ public class PatientController {
                 birthdate = LocalDate.parse(newBirthdateStr.trim(), formatter);
             } catch (DateTimeParseException ex) {
                 return new Response("Invalid birthdate format. Must be YYYY-MM-DD", Status.BAD_REQUEST);
+            }
+            
+            if (newGender == null) {
+                return new Response("Please select a gender.", Status.BAD_REQUEST);
             }
 
             // Actualizar Modelo
