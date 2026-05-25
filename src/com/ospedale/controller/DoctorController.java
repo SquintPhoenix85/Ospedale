@@ -16,6 +16,14 @@ import com.ospedale.model.Specialty;
  * @author marianaserrato
  */
 public class DoctorController {
+    private static Specialty parseSpecialty(String specialtyStr) {
+        if (specialtyStr == null || specialtyStr.trim().isEmpty()) {
+            throw new IllegalArgumentException("Invalid Specialty");
+        }
+        String normalized = specialtyStr.trim().replaceAll(" &", "").replaceAll(" ", "_").toUpperCase();
+        return Specialty.valueOf(normalized);
+    }
+
      public static Response registerDoctor(String creatorId, String idStr, String username, String firstname, String lastname, String password, String confirmPassword, String specialtyStr, String licenceNumber, String office) {
         try {
             Storage storage = Storage.getInstance();
@@ -62,7 +70,7 @@ public class DoctorController {
             // 6. Especialidad
             Specialty specialty;
             try {
-                specialty = Specialty.valueOf(specialtyStr.trim().toUpperCase());
+                specialty = parseSpecialty(specialtyStr);
             } catch (IllegalArgumentException e) {
                 return new Response("Invalid Specialty", Status.BAD_REQUEST);
             }
@@ -120,7 +128,7 @@ public class DoctorController {
             // Validar Especialidad
             Specialty specialty;
             try {
-                specialty = Specialty.valueOf(newSpecialtyStr.trim().toUpperCase());
+                specialty = parseSpecialty(newSpecialtyStr);
             } catch (IllegalArgumentException e) {
                 return new Response("Invalid Specialty", Status.BAD_REQUEST);
             }

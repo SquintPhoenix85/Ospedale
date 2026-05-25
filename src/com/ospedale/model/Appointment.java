@@ -113,6 +113,8 @@ public class Appointment implements Serializable {
         map.put("datetime", this.datetime != null ? this.datetime.toString() : null);
         map.put("status", this.status != null ? this.status.name() : null); 
         map.put("reason", this.reason);
+        map.put("specialty", this.specialty != null ? this.specialty.name() : null);
+        map.put("type", this.type);
         
         if (this.patient != null) {
             map.put("patientId", this.patient.getId());
