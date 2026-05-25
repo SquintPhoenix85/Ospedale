@@ -13,6 +13,7 @@ import com.ospedale.model.Appointment;
 import com.ospedale.model.Doctor;
 import com.ospedale.model.Hospitalization;
 import com.ospedale.model.Patient;
+import com.ospedale.model.RoomType;
 import com.ospedale.model.Specialty;
 import com.ospedale.model.User;
 import com.ospedale.controller.utils.Response;
@@ -22,6 +23,7 @@ import com.ospedale.controller.ViewDataController;
 import com.ospedale.controller.NotificationController;
 import com.ospedale.controller.PatientController;
 import com.ospedale.controller.HospitalizationController;
+import com.ospedale.model.storage.Storage;
 
 
 /**
@@ -47,6 +49,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
         this.patient = patient;
         this.hospitalizations = hospitalizations;
         this.appointments = appointments;
+        loadDashboardDropdowns();
         if (user instanceof Administrator) {
             BackButton.setVisible(true);
         } else {
@@ -54,6 +57,47 @@ public class PatientDashboardView extends javax.swing.JFrame {
         }
         this.setBackground(new Color(0, 0, 0, 0));
         this.setLocationRelativeTo(null);
+    }
+
+    private void loadDashboardDropdowns() {
+        Storage storage = Storage.getInstance();
+
+        this.users = new ArrayList<>(storage.getAllUsers());
+        this.appointments = new ArrayList<>(storage.getAppointments());
+        this.hospitalizations = new ArrayList<>(storage.getHospitalizations());
+
+        AppointmentIDDropdown.removeAllItems();
+        DoctorSelDropdown.removeAllItems();
+        HospDoctorDropdown.removeAllItems();
+        DesiredRoomDropdown.removeAllItems();
+
+        AppointmentIDDropdown.addItem("Select one");
+        DoctorSelDropdown.addItem("Select one");
+        HospDoctorDropdown.addItem("Select one");
+        DesiredRoomDropdown.addItem("Select one");
+
+        for (Appointment appointment : appointments) {
+            if (appointment.getPatient() == null
+                || appointment.getPatient().getId() != patient.getId()) {
+                continue;
+            }
+            if (appointment.getStatus() != com.ospedale.model.AppointmentStatus.COMPLETED
+                && appointment.getStatus() != com.ospedale.model.AppointmentStatus.CANCELED) {
+                AppointmentIDDropdown.addItem(appointment.getId());
+            }
+        }
+
+        for (User currentUser : users) {
+            if (currentUser instanceof Doctor) {
+                String doctorId = String.valueOf(currentUser.getId());
+                DoctorSelDropdown.addItem(doctorId);
+                HospDoctorDropdown.addItem(doctorId);
+            }
+        }
+
+        for (RoomType roomType : RoomType.values()) {
+            DesiredRoomDropdown.addItem(roomType.name());
+        }
     }
 
     /**
@@ -794,6 +838,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
         Response response = AppointmentController.cancelAppointment(idAppointment, String.valueOf(patient.getId()));
         if (response.getStatus() == Status.OK) {
             NotificationController.notifySuccess(response.getMessage(), this);
+            loadDashboardDropdowns();
         } else {
             NotificationController.notifyError(response.getMessage(), this);
         }
@@ -821,6 +866,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
 
         if (response.getStatus() == Status.OK) {
             NotificationController.notifySuccess(response.getMessage(), this);
+            loadDashboardDropdowns();
         } else {
             NotificationController.notifyError(response.getMessage(), this);
         }
@@ -886,6 +932,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
 
         if (response.getStatus() == Status.CREATED) {
             NotificationController.notifySuccess(response.getMessage(), this);
+            loadDashboardDropdowns();
         } else {
             NotificationController.notifyError(response.getMessage(), this);
         }
@@ -917,6 +964,7 @@ public class PatientDashboardView extends javax.swing.JFrame {
                 
         if (response.getStatus() == Status.CREATED) {
             NotificationController.notifySuccess(response.getMessage(), this);
+            loadDashboardDropdowns();
         } else {
             NotificationController.notifyError(response.getMessage(), this);
         }

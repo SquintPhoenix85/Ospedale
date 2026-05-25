@@ -53,12 +53,70 @@ public class DoctorDashboardView extends javax.swing.JFrame {
         this.doctor = doc;
         this.hospitalizations = hospitalizations;
         this.appointments = appointments;
+        loadDashboardDropdowns();
         if (user instanceof Administrator)
             BackBtn.setVisible(true);
         else    
             BackBtn.setVisible(false);
         this.setBackground(new Color(0, 0, 0, 0));
         this.setLocationRelativeTo(null);
+    }
+
+    private void loadDashboardDropdowns() {
+        Storage storage = Storage.getInstance();
+
+        this.users = new ArrayList<>(storage.getAllUsers());
+        this.hospitalizations = new ArrayList<>(storage.getHospitalizations());
+        this.appointments = new ArrayList<>(storage.getAppointments());
+
+        AcceptAppointmentSelectorDropdown.removeAllItems();
+        RescheduleAppointmentDropdown.removeAllItems();
+        CompleteAppointmentSelectorDropdown.removeAllItems();
+        AppointmentIDSelDropdown.removeAllItems();
+        RequestSelectDropdown.removeAllItems();
+        PatientIDSelDropdown.removeAllItems();
+        PatientSelectDropdown.removeAllItems();
+
+        AcceptAppointmentSelectorDropdown.addItem("Select one");
+        RescheduleAppointmentDropdown.addItem("Select one");
+        CompleteAppointmentSelectorDropdown.addItem("Select one");
+        AppointmentIDSelDropdown.addItem("Select one");
+        RequestSelectDropdown.addItem("Select one");
+        PatientIDSelDropdown.addItem("Select one");
+        PatientSelectDropdown.addItem("Select one");
+
+        for (Appointment appointment : appointments) {
+            if (appointment.getDoctor() == null
+                || appointment.getDoctor().getId() != doctor.getId()) {
+                continue;
+            }
+
+            String appointmentId = appointment.getId();
+
+            if (appointment.getStatus() == AppointmentStatus.REQUESTED) {
+                AcceptAppointmentSelectorDropdown.addItem(appointmentId);
+            }
+
+            if (appointment.getStatus() == AppointmentStatus.PENDING) {
+                RescheduleAppointmentDropdown.addItem(appointmentId);
+                CompleteAppointmentSelectorDropdown.addItem(appointmentId);
+                AppointmentIDSelDropdown.addItem(appointmentId);
+            }
+        }
+
+        for (Hospitalization hospitalization : hospitalizations) {
+            if (hospitalization.getStatus() == HospitalizationStatus.REQUESTED) {
+                RequestSelectDropdown.addItem(hospitalization.getId());
+            }
+        }
+
+        for (User currentUser : users) {
+            if (currentUser instanceof Patient) {
+                String patientId = String.valueOf(currentUser.getId());
+                PatientIDSelDropdown.addItem(patientId);
+                PatientSelectDropdown.addItem(patientId);
+            }
+        }
     }
 
     /**
@@ -1155,6 +1213,7 @@ public class DoctorDashboardView extends javax.swing.JFrame {
                     appointmentData.get("status")
                 });
             }
+            loadDashboardDropdowns();
         } else {
             NotificationController.notifyError(response.getMessage(), this);
         }
@@ -1184,6 +1243,7 @@ public class DoctorDashboardView extends javax.swing.JFrame {
 
         if (response.getStatus() == Status.OK) {
             NotificationController.notifySuccess(response.getMessage(), this);
+            loadDashboardDropdowns();
         } else if (response.getStatus() == Status.BAD_REQUEST || response.getStatus() == Status.NOT_FOUND) {
             NotificationController.notifyInfo(response.getMessage(), this);
         } else {
@@ -1209,6 +1269,7 @@ public class DoctorDashboardView extends javax.swing.JFrame {
             Response response = HospitalizationController.denyHospitalization(hospId, String.valueOf(doctor.getId()));
             if (response.getStatus() == Status.OK) {
                 NotificationController.notifySuccess(response.getMessage(), this);
+                loadDashboardDropdowns();
             } else {
                 NotificationController.notifyError(response.getMessage(), this);
             }
@@ -1235,6 +1296,7 @@ public class DoctorDashboardView extends javax.swing.JFrame {
                 String newHospId = response.getData().get("hospitalizationId").toString();
                 HospitalizationController.approveHospitalization(newHospId, String.valueOf(doctor.getId()));
                 NotificationController.notifySuccess("Direct Hospitalization created and assigned.", this);
+                loadDashboardDropdowns();
             } else {
                 NotificationController.notifyError(response.getMessage(), this);
             }
@@ -1262,6 +1324,7 @@ public class DoctorDashboardView extends javax.swing.JFrame {
                         appointmentData.get("status")
                     });
                 }
+                loadDashboardDropdowns();
             } else {
                 NotificationController.notifyError(response.getMessage(), this);
             }
@@ -1292,10 +1355,16 @@ public class DoctorDashboardView extends javax.swing.JFrame {
     }//GEN-LAST:event_FilterTotalAppointmentsBtnActionPerformed
 
     private void AcceptanceAppointmentBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AcceptanceAppointmentBtnActionPerformed
+        if (AcceptAppointmentSelectorDropdown.getSelectedIndex() <= 0) {
+            NotificationController.notifyInfo("Please select a requested appointment first.", this);
+            return;
+        }
+
         String idAppointment = AcceptAppointmentSelectorDropdown.getItemAt(AcceptAppointmentSelectorDropdown.getSelectedIndex());
         Response response = AppointmentController.acceptAppointment(idAppointment, String.valueOf(doctor.getId()));
         if (response.getStatus() == Status.OK) {
             NotificationController.notifySuccess(response.getMessage(), this);
+            loadDashboardDropdowns();
         } else {
             NotificationController.notifyError(response.getMessage(), this);
         }
@@ -1313,6 +1382,7 @@ public class DoctorDashboardView extends javax.swing.JFrame {
         );
         if (response.getStatus() == Status.OK) {
             NotificationController.notifySuccess(response.getMessage(), this);
+            loadDashboardDropdowns();
         } else if (response.getStatus() == Status.BAD_REQUEST || response.getStatus() == Status.NOT_FOUND) {
             NotificationController.notifyInfo(response.getMessage(), this);
         } else {
@@ -1342,6 +1412,7 @@ public class DoctorDashboardView extends javax.swing.JFrame {
         if (response.getStatus() == Status.OK) {
             model.addRow(new Object[]{appointmentId, medicationName, doseStr, administrationRoute, durationStr, aditionalIformation, frequencyStr});
             NotificationController.notifySuccess(response.getMessage(), this);
+            loadDashboardDropdowns();
         } else {
             NotificationController.notifyError(response.getMessage(), this);
         }
@@ -1354,6 +1425,7 @@ public class DoctorDashboardView extends javax.swing.JFrame {
         Response response = AppointmentController.rescheduleAppointment(appointmentId, String.valueOf(doctor.getId()), newTimeStr, reasonChangeTime);
         if (response.getStatus() == Status.OK) {
             NotificationController.notifySuccess(response.getMessage(), this);
+            loadDashboardDropdowns();
         } else {
             NotificationController.notifyError(response.getMessage(), this);
         }
